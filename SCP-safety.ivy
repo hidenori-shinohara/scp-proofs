@@ -1,15 +1,14 @@
-#lang ivy1.6
+#lang ivy1.7
 
 include order
 
-type value
+type value # This corresponds to b.x in the white paper.
+type ballot # This corresponds to the ballot counter. In other words, b.n.
 type node
 type nset # sets of nodes
-type ballot
 
 trusted isolate ordering_assms = {
     instantiate totally_ordered(ballot)
-    #instantiate totally_ordered(value)
 }
 
 relation well_behaved(N:node)
@@ -18,6 +17,7 @@ relation intact(N:node)
 
 # intact nodes are intertwined
 axiom intact(N) -> intertwined(N)
+
 # intertwined nodes are well-behaved
 axiom intertwined(N) -> well_behaved(N)
 
@@ -34,27 +34,43 @@ trusted isolate qi_intact = {
 }
 
 relation blocks_slices(S:nset, N:node)
+
 # if set R blocks an intact node then R contains an intact node
 # QAG edge nset -> node
 axiom (exists N . intact(N) & blocks_slices(S,N)) -> exists N2 . member(N2,S) & intact(N2)
 
-# the set of all intact nodes is a quorum
+# The set of all intact nodes is a quorum
+# As long as the FBAS enjoys quorum intersection, the set of befouled nodes is a DSet by Theorem 3 in the paper.
+# Since the FBAS must enjoy quorum availability despite any DSet, the set of all intact nodes is a quorum.
 axiom exists Q . (forall N . member(N,Q) <-> intact(N)) & is_quorum(Q)
 
 object protocol = {
     
+    # Whether the node {voted, accepted, confirmed} to prepare b = (ballot, value).
+    # The ballot type in this file is just b.n.
+    # More specifically, whether it {voted, accepted, confirmed} for { abort b_{old} | b_{old} \lnsim b }.
+    # See Definition(prepared) on P.22.
     relation voted_prepared(N:node, B:ballot, V:value)
     relation accepted_prepared(N:node, B:ballot, V:value)
     relation confirmed_prepared(N:node, B:ballot, V:value)
+
+    # Whether the node {voted, accepted, confirmed} the statement commit b where b = (ballot, value).
     relation voted_committed(N:node, B:ballot, V:value)
     relation accepted_committed(N:node, B:ballot, V:value)
     relation confirmed_committed(N:node, B:ballot, V:value)
+
+    # Whether the value is the value the node ended up with after the nomination protocol.
     relation nomination_output(N:node, V:value)
+
+    # TODO: Figure these out
     relation timer_armed(N:node)
     relation started(N:node, B:ballot)
     relation left_ballot(N:node, B:ballot)
 
-    # messages received
+    # Whether N1 heard that N2 {voted, accepted} to {prepare, commit} (B, V).
+    # TODO: Make sure N1, N2 aren't the opposite!
+    # Note that we do not have confirm here because a node confirms a message
+    # if and only if it is in a quorum where everyone accepts it.
     relation received_vote_prepare(N1:node, N2:node, B:ballot, V:value)
     relation received_accept_prepare(N1:node, N2:node, B:ballot, V:value)
     relation received_vote_commit(N1:node, N2:node, B:ballot, V:value)
