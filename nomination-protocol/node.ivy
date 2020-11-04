@@ -1,0 +1,10 @@
+#lang ivy1.7
+
+# id_t is the type of node ids
+# self_id is the id_t of each node instance
+
+module node(id_t, self_id) = {
+    # This is a rather trivial result because the universe is a quorum.
+    # This implicitly creates a function: node_id -> quorums.
+    invariant exists Q. net.intf.is_quorum(Q) & net.intf.nset.member(self_id, Q)
+}

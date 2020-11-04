@@ -1,0 +1,16 @@
+#lang ivy1.7
+
+include set
+
+module network(id_t) = {
+    object intf = {
+        instance nset : set(id_t)
+        relation is_quorum(S:nset)
+        axiom is_quorum(nset.universe)
+
+        # Two quorums must intersect.
+        # This implicitly creates a function: quorum -> quorum -> node_id.
+        axiom forall S1, S2. (is_quorum(S1) & is_quorum(S2))
+                -> (exists V. nset.member(V, S1) & nset.member(V, S2))
+    }
+}

@@ -1,0 +1,10 @@
+#lang ivy1.7
+
+include node
+include network
+
+# The type of node identities (eg. public keys / IP addresses or such)
+type id_t
+
+instance net : network(id_t)
+instance nodes(ID:id_t) : node(id_t, ID)
