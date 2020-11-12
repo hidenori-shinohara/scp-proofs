@@ -106,12 +106,14 @@ module network(id_t, val_t) = {
                     -> exists OTHER. nodes(OTHER).spec.have_voted(VALUE)
         invariant have_delivered_accept(SRC, DST, VALUE)
                     -> nodes(SRC).spec.have_accepted(VALUE)
-        invariant (SRC ~= DST & have_delivered_accept(SRC, DST, VALUE))
+        invariant have_delivered_accept(SRC, DST, VALUE)
                     -> nodes(DST).spec.heard_accept(SRC, VALUE)
         invariant nodes(ID).spec.have_confirmed(VALUE) ->
                     exists OTHER. nodes(OTHER).spec.have_voted(VALUE)
         invariant have_delivered_accept(SRC, DST, VALUE)
                     -> have_broadcast_accept(SRC, VALUE)
+        invariant nodes(DST).spec.heard_vote(SRC, VALUE)
+                    -> nodes(SRC).spec.have_voted(VALUE) & have_delivered_vote(SRC, DST, VALUE)
 
 # IVy can't seem to prove this.
 # The setup is wrong and/or I haven't added enough invariants.
