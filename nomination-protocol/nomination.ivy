@@ -7,9 +7,7 @@ type nset
 
 relation member(X:id_t, S:nset)
 
-# voted-on values are 16-bit values
 type val_t
-interpret val_t -> bv[16]
 
 include node
 include network
@@ -40,9 +38,11 @@ export test.ensure_not_heard_accept
 # id_t is a 1-bit number.
 # nset is a 2-bit number.
 # This is because we want 2^(# of id_t).
+# voted-on values are 16-bit values
 isolate ext_impl = {
     interpret id_t -> bv[1]
     interpret nset -> bv[2]
+    interpret val_t -> bv[16]
 }
 
 # Extract a runnable node parameterized by a self-id
