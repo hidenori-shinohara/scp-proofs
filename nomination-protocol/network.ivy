@@ -37,6 +37,8 @@ isolate network =
 
     relation did_another_node_accept(NODE:id_t, VAL:val_t)
     definition did_another_node_accept(NODE, VAL) = exists OTHER. NODE ~= OTHER & node.heard_accept(NODE, OTHER, VAL)
+    relation heard_everyone_accept(NODE:id_t, VAL:val_t)
+    definition heard_everyone_accept(NODE, VAL) = forall OTHER. node.heard_accept(NODE, OTHER, VAL)
 
     after init {
         is_quorum(S) := false;
@@ -103,6 +105,16 @@ isolate network =
     {
         require ~network_started;
         network_started := true;
+
+        # Axiom 1, 2: Quorum intersection
+        # In this simplified model, every node becomes intact.
+        assume forall Q1, Q2. ((is_quorum(Q1) & is_quorum(Q2)) -> exists V. member(V, Q1) & member(V, Q2));
+
+        # Axiom 3: The set of all nodes must be a quorum.
+        assume exists Q. (is_quorum(Q) & forall V. member(V, Q));
+
+        # Axiom 5: V-blocking sets must be nonempty
+        assume is_v_blocking(V, S) -> exists W. member(W, S)
     }
 
     # This ensures that the quorum & v-blocking set configuration is "sane"
@@ -117,14 +129,7 @@ isolate network =
         # The following axioms are taken from
         # https://github.com/stellar/scp-proofs/blob/master/README.md#abstractions
 
-        # Axiom 1, 2: Quorum intersection
-        # In this simplified model, every node becomes intact.
-        assume forall Q1, Q2. ((is_quorum(Q1) & is_quorum(Q2)) -> exists V. member(V, Q1) & member(V, Q2));
-
-        # Axiom 3: The set of all nodes must be a quorum.
-        assume exists Q. (is_quorum(Q) & forall V. member(V, Q));
-
-        # Axiom 4: Cascade theorem
+# Axiom 4: Cascade theorem
         assume forall Q, V. is_quorum(Q) & (exists N0 . member(N0,Q)) & (forall N . member(N,Q) -> node.accepted(N, V))
             -> (
                     (forall N1 . node.accepted(N1, V)) |
@@ -132,9 +137,6 @@ isolate network =
                      (forall N3 . member(N3,S) -> node.accepted(N3, V))
                     )
                );
-
-        # Axiom 5: V-blocking sets must be nonempty
-        assume is_v_blocking(V, S) -> exists W. member(W, S)
     }
 
     # Preliminary invariants.
@@ -148,6 +150,9 @@ isolate network =
         invariant node.have_candidate(SRC) -> network_started
         invariant node.heard_accept(SELF, SRC, VAL) -> network_started
         invariant node.heard_vote(SELF, SRC, VAL) -> network_started
+        invariant network_started -> (exists Q. is_quorum(Q) & forall V. member(V, Q))
+        invariant network_started -> (is_v_blocking(V, S) -> exists W. member(W, S))
+        invariant network_started -> (forall Q1, Q2. ((is_quorum(Q1) & is_quorum(Q2)) -> exists V. member(V, Q1) & member(V, Q2)))
 
         invariant node.heard_accept(SELF, SRC, VAL) -> node.accepted(SRC, VAL)
         invariant node.heard_vote(SELF, SRC, VAL) -> node.voted(SRC, VAL)
@@ -169,6 +174,9 @@ isolate network =
 
         invariant [accept_forward] node.accepted(NODE, VALUE)
             -> (exists S. node_accept_condition_1(NODE, S, VALUE) | node_accept_condition_2(NODE, S, VALUE))
+
+        invariant [everyone_accept_heard]
+            heard_everyone_accept(NODE, VAL)  -> node.confirmed(NODE, VAL)
     }
     # Make sure that after all messages have been delivered, every node confirms the same candidate values.
     # This is NOT temporal logic because it doesn't guarantee that all messages will be delivered.
@@ -179,10 +187,16 @@ isolate network =
     # and transitions into a state that doesn't satisfy this property.
     # In many cases, the first state in such examples cannot possibly happen.
     # Therefore, we need to tell Ivy that they can't happen through the private invariants above.
+#    invariant [confirm_accept_messages_delivery]
+#        (exists NODE1, NODE2. node.confirmed(NODE1, VALUE) & ~node.accepted(NODE2, VALUE))
+#            -> (
+#                (exists NODE1, NODE2. node.accepted(NODE1, VALUE) & ~node.heard_accept(NODE2, NODE1, VALUE))
+#               )
+    individual n1:id_t
+    individual n2:id_t
+    individual v0:val_t
     invariant [same_candidate_set_after_all_messages_delivered]
-        (forall SRC, VALUE.
-         (node.voted(SRC, VALUE) -> (forall DST. SRC = DST | node.heard_vote(DST, SRC, VALUE))) &
-         (node.accepted(SRC, VALUE) -> (forall DST. SRC = DST | node.heard_accept(DST, SRC, VALUE))))
-            -> (forall NODE1, NODE2, VALUE. node.confirmed(NODE1, VALUE) -> node.confirmed(NODE2, VALUE))
+        (node.confirmed(n1, v0) & ~node.confirmed(n2, v0))
+            -> (exists NODE1, NODE2. node.accepted(NODE1, VALUE) & ~node.heard_accept(NODE2, NODE1, VALUE))
 }
 with id_t, node, nset
