@@ -37,8 +37,15 @@ isolate network =
 
     relation did_another_node_accept(NODE:id_t, VAL:val_t)
     definition did_another_node_accept(NODE, VAL) = exists OTHER. NODE ~= OTHER & node.heard_accept(NODE, OTHER, VAL)
+
     relation heard_everyone_accept(NODE:id_t, VAL:val_t)
     definition heard_everyone_accept(NODE, VAL) = forall OTHER. node.heard_accept(NODE, OTHER, VAL)
+
+    relation heard_everyone_vote(NODE:id_t, VAL:val_t)
+    definition heard_everyone_vote(NODE, VAL) = forall OTHER. node.heard_vote(NODE, OTHER, VAL)
+
+    relation heard_set_accept(NODE:id_t, S:nset, VAL:val_t)
+    definition heard_set_accept(NODE, S, VAL) = forall OTHER. (member(OTHER, S) -> node.heard_accept(NODE, OTHER, VAL))
 
     after init {
         is_quorum(S) := false;
@@ -133,8 +140,10 @@ isolate network =
         assume forall Q, V. is_quorum(Q) & (exists N0 . member(N0,Q)) & (forall N . member(N,Q) -> node.accepted(N, V))
             -> (
                     (forall N1 . node.accepted(N1, V)) |
-                    (exists N2, S . ~node.accepted(N2, V) & is_v_blocking(N2, S) &
-                     (forall N3 . member(N3,S) -> node.accepted(N3, V))
+                    (exists N2, S .
+                        ~node.accepted(N2, V) &
+                        is_v_blocking(N2, S) &
+                        (forall N3 . member(N3,S) -> node.accepted(N3, V))
                     )
                );
     }
@@ -176,7 +185,10 @@ isolate network =
             -> (exists S. node_accept_condition_1(NODE, S, VALUE) | node_accept_condition_2(NODE, S, VALUE))
 
         invariant [everyone_accept_heard]
-            heard_everyone_accept(NODE, VAL)  -> node.confirmed(NODE, VAL)
+            heard_everyone_accept(NODE, VAL) -> node.confirmed(NODE, VAL)
+
+        invariant [everyone_vote_heard]
+            heard_everyone_vote(NODE, VAL) -> node.accepted(NODE, VAL)
     }
     # Make sure that after all messages have been delivered, every node confirms the same candidate values.
     # This is NOT temporal logic because it doesn't guarantee that all messages will be delivered.
@@ -187,6 +199,9 @@ isolate network =
     # and transitions into a state that doesn't satisfy this property.
     # In many cases, the first state in such examples cannot possibly happen.
     # Therefore, we need to tell Ivy that they can't happen through the private invariants above.
+
+    invariant [force_accept]
+        is_v_blocking(N1, S) & heard_set_accept(N1, S, V) & node.confirmed(N3, V) -> node.accepted(N1, V)
 
     invariant [confirm_accept_messages_delivery]
         (exists NODE1, NODE2. node.confirmed(NODE1, VALUE) & ~node.accepted(NODE2, VALUE))
