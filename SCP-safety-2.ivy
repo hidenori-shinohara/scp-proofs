@@ -63,6 +63,14 @@ object protocol = {
     relation received_vote_commit(N1:node, N2:node, B:ballot, V:value)
     relation received_accept_commit(N1:node, N2:node, B:ballot, V:value)
 
+    relation set_received_accept_prepare(NA:node, Q:nset, B:ballot, V:value)
+    definition set_received_accept_prepare(NA, Q, B, V) =
+        forall N. member(N,Q) -> received_accept_prepare(NA,N,B,V)
+
+    relation set_received_vote_or_accept_prepare(NA:node, Q:nset, B:ballot, V:value)
+    definition set_received_vote_or_accept_prepare(NA, Q, B, V) =
+        forall N. member(N,Q) -> received_vote_prepare(NA,N,B,V) | received_accept_prepare(NA,N,B,V)
+
     object actions = {
 
         after init {
@@ -154,7 +162,7 @@ object protocol = {
             assume voted_prepared(nb,b,v);
             received_vote_prepare(na,nb,b,v) := true;
             if (exists Q . is_quorum(Q) & member(na,Q) &
-                   (forall N . member(N,Q) -> (received_vote_prepare(na,N,b,v) | received_accept_prepare(na,N,b,v)))) &
+                set_received_vote_or_accept_prepare(na, Q, b, v)) &
                (forall B,V . ~(accepted_committed(na,B,V) & B < b & V ~= v)) & # not accepted anything contradictory
                (forall V . ~accepted_prepared(na,b,V)) # do not accept twice
             {
@@ -170,15 +178,16 @@ object protocol = {
             
             assume accepted_prepared(nb,b,v);
             received_accept_prepare(na,nb,b,v) := true;
-            if exists Q . is_quorum(Q) & member(na,Q) & forall N . member(N,Q) -> received_accept_prepare(na,N,b,v) {
+            if exists Q . is_quorum(Q) & member(na,Q) & set_received_accept_prepare(na, Q, b, v) {
                 confirmed_prepared(na,b,v) := true; # we must confirm prepared even if we left the ballot because that's used to pick the value to prepare in higher ballots.
                 if ~left_ballot(na,b) {
                     voted_committed(na,b,v) := true;
                     # NOTE we do not vote if we left ballot b already. This is important because if anything has already been prepared at a higher ballot, then we risk a contradiction; this would violate the invariant stating that votes to commit are not contradicted unless they have been overruled.
                 };
             };
-            if ((exists Q . is_quorum(Q) & member(na,Q) & (forall N . member(N,Q) -> (received_vote_prepare(na,N,b,v) | received_accept_prepare(na,N,b,v)))) |
-                   (exists S . blocks_slices(S,na) & (forall N . member(N,S) -> received_accept_prepare(na,N,b,v)))) # &
+            if ((exists Q . is_quorum(Q) & member(na,Q) & (set_received_vote_or_accept_prepare(na, Q, b, v))) |
+                
+                   (exists S . blocks_slices(S,na) & (set_received_accept_prepare(na, S, b, v)))) # &
                 # (forall B,V . ~(accepted_committed(na,B,V) & B < b & V ~= v)) & # not accepted anything contradictory
                 # (forall V . ~accepted_prepared(na,b,V)) # do not accept twice
             {
@@ -271,7 +280,7 @@ object protocol = {
     isolate safety = {
 
         # a confirmed prepared pair cannot be contradicted, thus receiving "accept prepair" from a blocking set causes to accept:
-        conjecture intact(N1) & blocks_slices(S,N1) & (forall N2. member(N2,S) -> received_accept_prepare(N1,N2,b0,v0)) & intact(N3) & confirmed_prepared(N3,b0,v0) -> accepted_prepared(N1,b0,v0)
+        conjecture intact(N1) & blocks_slices(S,N1) & set_received_accept_prepare(N1,S,b0,v0) & intact(N3) & confirmed_prepared(N3,b0,v0) -> accepted_prepared(N1,b0,v0)
 
         # If an intact node confirms (b,v) as prepared and another intact node has not yet accepted (b,v) as prepared, then there must be an accept message in flight
         conjecture intact(n1) & intact(n2) & confirmed_prepared(n1,b0,v0) & ~accepted_prepared(n2,b0,v0) -> (exists N1,N2 . intact(N1) & intact(N2) & accepted_prepared(N1,b0,v0) & ~received_accept_prepare(N2,N1,b0,v0))
