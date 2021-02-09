@@ -1,0 +1,45 @@
+#lang ivy1.7
+
+isolate test = {
+    action ensure_voted(self_id:id_t, val:val_t) =
+    {
+        require node.voted(self_id, val);
+    }
+    action ensure_not_voted(self_id:id_t, val:val_t) =
+    {
+        require ~node.voted(self_id, val);
+    }
+    action ensure_heard_vote(self_id:id_t, src:id_t, val:val_t) =
+    {
+        require node.heard_vote(self_id, src, val);
+    }
+    action ensure_not_heard_vote(self_id:id_t, src:id_t, val:val_t) =
+    {
+        require ~node.heard_vote(self_id, src, val);
+    }
+    action ensure_accepted(self_id:id_t, val:val_t) =
+    {
+        require node.accepted(self_id, val);
+    }
+    action ensure_not_accepted(self_id:id_t, val:val_t) =
+    {
+        require ~node.accepted(self_id, val);
+    }
+    action ensure_heard_accept(self_id:id_t, src:id_t, val:val_t) =
+    {
+        require node.heard_accept(self_id, src, val);
+    }
+    action ensure_not_heard_accept(self_id:id_t, src:id_t, val:val_t) =
+    {
+        require ~node.heard_accept(self_id, src, val);
+    }
+    action ensure_confirmed(self_id:id_t, val:val_t) =
+    {
+        require node.confirmed(self_id, val);
+    }
+    action ensure_not_confirmed(self_id:id_t, val:val_t) =
+    {
+        require ~node.confirmed(self_id, val);
+    }
+} with node, node
+
