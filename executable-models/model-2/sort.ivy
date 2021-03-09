@@ -1,0 +1,23 @@
+#lang ivy1.7
+
+type id_t
+type set_t
+type val_t
+
+interpret id_t -> {v0, v1, v2}
+interpret set_t -> bv[2]
+interpret val_t -> bv[1]
+
+# For some reason the following properties aren't implied by the 'interpret'
+# declarations, though it seems like they should be.
+#
+# Notable: it seems to work without these properties if we pass 'complete=qf'
+# but we .. don't necessarily always want to do that?
+
+# Simply comparing a node with 0, 1, 2 would not work because of
+# error: Cannot cast "0:id_t" to native sort id_t
+# See https://github.com/kenmcmil/ivy/issues/15
+
+property [exactly_three_nodes] forall A:id_t, B, C, D. (A = B | A = C | A = D | B = C | B = D | C = D)
+property [exactly_two_values] forall V:val_t. V = 0 | V = 1
+property [exactly_four_sets] forall S:set_t. S = 0 | S = 1 | S = 2 | S = 3
