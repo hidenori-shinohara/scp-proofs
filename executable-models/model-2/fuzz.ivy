@@ -11,5 +11,7 @@ export network.deliver_vote
 export network.deliver_accept
 export assertion.check_invariants
 
+# TODO: This currently doesn't work because of
+# https://github.com/kenmcmil/ivy/issues/16
 # Extract a runnable node parameterized by a self-id
 extract fuzz_runner = node, network, id_t, assertion

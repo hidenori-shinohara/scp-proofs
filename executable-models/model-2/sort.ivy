@@ -5,7 +5,7 @@ type set_t
 type val_t
 
 interpret id_t -> {v0, v1, v2}
-interpret set_t -> bv[2]
+interpret set_t -> bv[3]
 interpret val_t -> bv[1]
 
 # For some reason the following properties aren't implied by the 'interpret'
@@ -17,7 +17,7 @@ interpret val_t -> bv[1]
 # Simply comparing a node with 0, 1, 2 would not work because of
 # error: Cannot cast "0:id_t" to native sort id_t
 # See https://github.com/kenmcmil/ivy/issues/15
-
-property [exactly_three_nodes] forall A:id_t, B, C, D. (A = B | A = C | A = D | B = C | B = D | C = D)
+ 
+property [exactly_three_nodes] forall A:id_t. A = v0 | A = v1 | A = v2
 property [exactly_two_values] forall V:val_t. V = 0 | V = 1
-property [exactly_four_sets] forall S:set_t. S = 0 | S = 1 | S = 2 | S = 3
+property [exactly_eight_sets] forall S:set_t. S = 0 | S = 1 | S = 2 | S = 3 | S = 4 | S = 5 | S = 6 | S = 7
