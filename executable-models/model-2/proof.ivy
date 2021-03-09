@@ -3,7 +3,6 @@
 include sort
 include node
 include network
-include assertion
 
 # Ivy checks that the following invariants always hold if we start with the initialization state
 # (i.e., `after init`) and continuously apply the exported actions below.
