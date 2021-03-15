@@ -91,6 +91,13 @@ object node = {
         require ~voted(self_id, v);
         voted(self_id, v) := true;
         heard_vote(self_id, self_id, v) := true;
+        if ready_to_accept_but_have_not_accepted(self_id, v) {
+            accepted(self_id, v) := true;
+            heard_accept(self_id, self_id, v) := true;
+        };
+        if ready_to_confirm_but_have_not_confirmed(self_id, v) {
+            confirmed(self_id, v) := true;
+        };
     }
 
     action recv_vote(self_id:id_t, src:id_t, val:val_t) =
