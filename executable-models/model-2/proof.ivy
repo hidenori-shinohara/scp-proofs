@@ -11,6 +11,10 @@ include network
 private {
     invariant [voted_or_not_voted] forall V, VAL. node.voted(V, VAL) | ~node.voted(V, VAL)
 
+    invariant [voted_implies_heard_itself_vote] forall V, VAL. node.voted(V, VAL) -> node.heard_vote(V, V, VAL)
+
+    invariant [accepted_implies_heard_itself_accept] forall V, VAL. node.accepted(V, VAL) -> node.heard_accept(V, V, VAL)
+
     invariant [heard_vote_implies_voted]
         forall SELF, OTHER, VAL. node.heard_vote(SELF, OTHER, VAL) -> node.voted(OTHER, VAL)
 
@@ -25,6 +29,12 @@ private {
 
     invariant [if_node_is_ready_to_confirm_it_must_confirm]
         ~forall N, V . node.ready_to_confirm_but_have_not_confirmed(N, V)
+
+    invariant [if_accept_condition_1_then_must_accept]
+        forall V, VAL. node.accept_condition_1(V, VAL) -> node.accepted(V, VAL)
+
+    invariant [if_accept_condition_2_then_must_accept]
+        forall V, VAL. node.accept_condition_2(V, VAL) -> node.accepted(V, VAL)
 
     invariant [accepted_implies_node_heard_itself_accept]
         forall N, V. node.accepted(N, V) -> node.heard_accept(N, N, V)
@@ -45,6 +55,9 @@ private {
         forall N, V . node.confirmed(N, V) ->
             (exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V))
 
+    invariant [if_there_exists_quorum_accepting_value_then_confirmed]
+        forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V)) -> node.confirmed(N, V))
+
     invariant [heard_quorum_accept_implies_confirmed]
         forall N1, V. (exists Q.
                 node.is_quorum(Q) &
@@ -54,7 +67,7 @@ private {
 
 invariant [confirm_same_after_sufficient_messages]
     forall VAL. (exists NODE1, NODE2. node.confirmed(NODE1, VAL) & ~node.confirmed(NODE2, VAL))
-        -> (exists NODE1, NODE2. node.accepted(NODE1, VAL) & ~node.heard_accept(NODE2, NODE1, VAL))
+        -> (exists NODE3, NODE4. node.accepted(NODE3, VAL) & ~node.heard_accept(NODE4, NODE3, VAL))
 
 export network.deliver_vote
 export network.deliver_accept
