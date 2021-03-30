@@ -38,10 +38,6 @@ object node = {
     # The remaining relations are definitions, used as
     # abbreviations inside logical formulas elsewhere.
 
-    relation heard_set_accept(SELF:id_t, SET:set_t, VAL:val_t)
-    definition heard_set_accept(SELF, S, VAL) =
-        forall V. member(V, S) -> heard_accept(SELF, V, VAL)
-
     relation accept_condition_1(SELF:id_t, VAL:val_t)
     definition accept_condition_1(SELF, VAL) =
         exists Q.
@@ -60,7 +56,7 @@ object node = {
         exists S.
             (
                 is_v_blocking(SELF, S) &
-                heard_set_accept(SELF, S, VAL)
+                (forall W. member(W, S) -> heard_accept(SELF, W, VAL))
             )
 
     relation ready_to_accept_but_have_not_accepted(SELF:id_t, VAL:val_t)
@@ -76,7 +72,7 @@ object node = {
             (
                 is_quorum(Q) &
                 member(SELF, Q) &
-                heard_set_accept(SELF, Q, VAL)
+                (forall W. member(W, Q) -> heard_accept(SELF, W, VAL))
             )
 
     after init {
