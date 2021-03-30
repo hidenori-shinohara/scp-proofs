@@ -37,13 +37,6 @@ object node = {
 
     # The remaining relations are definitions, used as
     # abbreviations inside logical formulas elsewhere.
-    relation heard_set_vote_or_accept(SELF:id_t, SET:set_t, VAL:val_t)
-    definition heard_set_vote_or_accept(SELF, S, VAL) =
-        forall V. member(V, S) ->
-            (
-                heard_vote(SELF, V, VAL) |
-                heard_accept(SELF, V, VAL)
-            )
 
     relation heard_set_accept(SELF:id_t, SET:set_t, VAL:val_t)
     definition heard_set_accept(SELF, S, VAL) =
@@ -55,7 +48,11 @@ object node = {
             (
                 is_quorum(Q) &
                 member(SELF, Q) &
-                heard_set_vote_or_accept(SELF, Q, VAL)
+                forall V. member(V, Q) ->
+                    (
+                        heard_vote(SELF, V, VAL) |
+                        heard_accept(SELF, V, VAL)
+                    )
             )
 
     relation accept_condition_2(SELF:id_t, VAL:val_t)
