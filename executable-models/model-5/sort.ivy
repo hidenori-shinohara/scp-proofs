@@ -1,0 +1,16 @@
+#lang ivy1.7
+
+type id_t
+type set_t
+type val_t
+
+# TODO: The following code should be removed to work with an arbitrarily sized network.
+# This is added here in order to test smaller cases.
+
+interpret id_t -> bv[1]
+interpret set_t -> bv[2]
+interpret val_t -> bv[1]
+
+property [exactly_two_nodes] forall A:id_t. A = 0 | A = 1
+property [exactly_four_sets] forall S:set_t. S = 0 | S = 1 | S = 2 | S = 3
+property [exactly_two_values] forall V:val_t. V = 0 | V = 1
