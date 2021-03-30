@@ -1,0 +1,26 @@
+define(`HEARD_SET_ACCEPT',
+       `(forall NODE_IN_$2. node.member(NODE_IN_$2, $2) -> node.heard_accept($1, NODE_IN_$2, $3))')dnl
+define(`HEARD_SET_VOTE_OR_ACCEPT',
+       `(forall NODE_IN_$2. node.member(NODE_IN_$2, $2) -> node.heard_vote($1, NODE_IN_$2, $3) | node.heard_accept($1, NODE_IN_$2, $3))')dnl
+define(`ACCEPT_CONDITION_1',
+       `(exists QUORUM_OF_$1. (node.is_quorum(QUORUM_OF_$1) & node.member($1, QUORUM_OF_$1) & HEARD_SET_VOTE_OR_ACCEPT($1, QUORUM_OF_$1, $2)))')dnl
+define(`ACCEPT_CONDITION_2',
+       `(exists SET_BLOCKING_$1.  (node.is_v_blocking($1, SET_BLOCKING_$1) & HEARD_SET_ACCEPT($1, SET_BLOCKING_$1, $2)))')dnl
+define(`READY_TO_CONFIRM_BUT_HAVE_NOT_CONFIRMED',
+       `(~node.confirmed($1, $2) & exists QUORUM_OF_$1. (node.is_quorum(QUORUM_OF_$1) & node.member($1, QUORUM_OF_$1) & HEARD_SET_ACCEPT($1, QUORUM_OF_$1, $2)))')dnl
+define(`READY_TO_ACCEPT_BUT_HAVE_NOT_ACCEPTED',
+       `(~node.accepted($1, $2) & (ACCEPT_CONDITION_1($1, $2) | ACCEPT_CONDITION_2($1, $2)))')dnl
+define(`TRY_TO_ACCEPT',
+       `if READY_TO_ACCEPT_BUT_HAVE_NOT_ACCEPTED($1, $2) {
+            node.accepted($1, $2) := true;
+            node.heard_accept($1, $1, $2) := true;
+        };')dnl
+define(`TRY_TO_CONFIRM',
+       `if READY_TO_CONFIRM_BUT_HAVE_NOT_CONFIRMED($1, $2) {
+            node.confirmed($1, $2) := true;
+        };')dnl
+define(`TRY_TO_ACCEPT_AND_CONFIRM',
+       `TRY_TO_ACCEPT($1, $2)
+        TRY_TO_CONFIRM($1, $2)')dnl
+define(`INTERSECT',
+       `(exists NODE_IN_$1_AND_$2. node.member(NODE_IN_$1_AND_$2, $1) & node.member(NODE_IN_$1_AND_$2, $2))')dnl

@@ -1,0 +1,10 @@
+#lang ivy1.7
+
+type id_t
+type set_t
+type val_t
+
+# TODO: The following code should be removed to work with an arbitrarily sized network.
+# This is added here in order to test smaller cases.
+
+interpret id_t -> bv[3]
