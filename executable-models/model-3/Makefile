@@ -7,7 +7,9 @@ all: network.ivy node.ivy sort.ivy assertion.ivy executable.ivy
 fuzz: network.ivy node.ivy sort.ivy assertion.ivy fuzz.ivy
 	ivyc target=test isolate=fuzz_runner classname=fuzz fuzz.ivy
 
-proof: network.ivy node.ivy sort.ivy assertion.ivy proof.ivy
+proof: network.ivy node.m4.ivy sort.ivy assertion.ivy proof.m4.ivy
+	m4 node.m4.ivy > node.ivy
+	m4 proof.m4.ivy > proof.ivy
 	ivy_check proof.ivy
 
 format: relation.py
