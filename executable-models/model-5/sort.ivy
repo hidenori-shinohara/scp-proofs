@@ -4,3 +4,4 @@ type id_t
 type set_t
 type val_t
 
+interpret id_t -> bv[2]
