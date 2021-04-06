@@ -22,3 +22,5 @@ define(`TRY_TO_CONFIRM',
 define(`TRY_TO_ACCEPT_AND_CONFIRM',
        `TRY_TO_ACCEPT($1, $2)
         TRY_TO_CONFIRM($1, $2)')dnl
+define(`INTERSECT',
+       `(exists NODE_IN_$1_AND_$2. node.member(NODE_IN_$1_AND_$2, $1) & node.member(NODE_IN_$1_AND_$2, $2))')dnl
