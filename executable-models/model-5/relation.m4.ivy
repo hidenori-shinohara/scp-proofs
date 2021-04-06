@@ -5,7 +5,7 @@ define(`HEARD_SET_VOTE_OR_ACCEPT',
 define(`ACCEPT_CONDITION_1',
        `(exists QUORUM_OF_$1. (node.is_quorum(QUORUM_OF_$1) & node.member($1, QUORUM_OF_$1) & HEARD_SET_VOTE_OR_ACCEPT($1, QUORUM_OF_$1, $2)))')dnl
 define(`ACCEPT_CONDITION_2',
-       `(exists SET_BLOCKING_$1.  (node.is_v_blocking($1, SET_BLOCKING_$1) & HEARD_SET_ACCEPT($1, SET_BLOCKING_$1, $2)))')dnl
+       `(exists SET_BLOCKING_$1.  (IS_V_BLOCKING($1, SET_BLOCKING_$1) & HEARD_SET_ACCEPT($1, SET_BLOCKING_$1, $2)))')dnl
 define(`READY_TO_CONFIRM_BUT_HAVE_NOT_CONFIRMED',
        `(~node.confirmed($1, $2) & exists QUORUM_OF_$1. (node.is_quorum(QUORUM_OF_$1) & node.member($1, QUORUM_OF_$1) & HEARD_SET_ACCEPT($1, QUORUM_OF_$1, $2)))')dnl
 define(`READY_TO_ACCEPT_BUT_HAVE_NOT_ACCEPTED',
@@ -24,3 +24,7 @@ define(`TRY_TO_ACCEPT_AND_CONFIRM',
         TRY_TO_CONFIRM($1, $2)')dnl
 define(`INTERSECT',
        `(exists NODE_IN_$1_AND_$2. node.member(NODE_IN_$1_AND_$2, $1) & node.member(NODE_IN_$1_AND_$2, $2))')dnl
+define(`IS_QUORUM_OF',
+       `(node.is_quorum($1) & node.member($2, $1))')dnl
+define(`IS_V_BLOCKING',
+       `(node.member($1, $2) | forall ANY_QUORUM. node.is_quorum(ANY_QUORUM) -> INTERSECT(ANY_QUORUM, $2))')dnl

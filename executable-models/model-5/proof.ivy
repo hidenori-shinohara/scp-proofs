@@ -32,7 +32,7 @@ private {
         forall SELF, VAL. node.accepted(SELF, VAL) -> (exists NODE. node.voted(NODE, VAL))
 
     invariant [if_node_is_ready_to_accept_it_must_accept]
-        forall N, V. ~(~node.accepted(N, V) & ((exists QUORUM_OF_N. (node.is_quorum(QUORUM_OF_N) & node.member(N, QUORUM_OF_N) & (forall NODE_IN_QUORUM_OF_N. node.member(NODE_IN_QUORUM_OF_N, QUORUM_OF_N) -> node.heard_vote(N, NODE_IN_QUORUM_OF_N, V) | node.heard_accept(N, NODE_IN_QUORUM_OF_N, V)))) | (exists SET_BLOCKING_N.  (node.is_v_blocking(N, SET_BLOCKING_N) & (forall NODE_IN_SET_BLOCKING_N. node.member(NODE_IN_SET_BLOCKING_N, SET_BLOCKING_N) -> node.heard_accept(N, NODE_IN_SET_BLOCKING_N, V))))))
+        forall N, V. ~(~node.accepted(N, V) & ((exists QUORUM_OF_N. (node.is_quorum(QUORUM_OF_N) & node.member(N, QUORUM_OF_N) & (forall NODE_IN_QUORUM_OF_N. node.member(NODE_IN_QUORUM_OF_N, QUORUM_OF_N) -> node.heard_vote(N, NODE_IN_QUORUM_OF_N, V) | node.heard_accept(N, NODE_IN_QUORUM_OF_N, V)))) | (exists SET_BLOCKING_N.  ((node.member(N, SET_BLOCKING_N) | forall ANY_QUORUM. node.is_quorum(ANY_QUORUM) -> (exists NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_N. node.member(NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_N, ANY_QUORUM) & node.member(NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_N, SET_BLOCKING_N))) & (forall NODE_IN_SET_BLOCKING_N. node.member(NODE_IN_SET_BLOCKING_N, SET_BLOCKING_N) -> node.heard_accept(N, NODE_IN_SET_BLOCKING_N, V))))))
 
     invariant [if_node_is_ready_to_confirm_it_must_confirm]
         forall N, V. ~(~node.confirmed(N, V) & exists QUORUM_OF_N. (node.is_quorum(QUORUM_OF_N) & node.member(N, QUORUM_OF_N) & (forall NODE_IN_QUORUM_OF_N. node.member(NODE_IN_QUORUM_OF_N, QUORUM_OF_N) -> node.heard_accept(N, NODE_IN_QUORUM_OF_N, V))))
@@ -41,7 +41,7 @@ private {
         forall V, VAL. ((exists QUORUM_OF_V. (node.is_quorum(QUORUM_OF_V) & node.member(V, QUORUM_OF_V) & (forall NODE_IN_QUORUM_OF_V. node.member(NODE_IN_QUORUM_OF_V, QUORUM_OF_V) -> node.heard_vote(V, NODE_IN_QUORUM_OF_V, VAL) | node.heard_accept(V, NODE_IN_QUORUM_OF_V, VAL))))) -> node.accepted(V, VAL)
 
     invariant [if_accept_condition_2_then_must_accept]
-        forall V, VAL. ((exists SET_BLOCKING_V.  (node.is_v_blocking(V, SET_BLOCKING_V) & (forall NODE_IN_SET_BLOCKING_V. node.member(NODE_IN_SET_BLOCKING_V, SET_BLOCKING_V) -> node.heard_accept(V, NODE_IN_SET_BLOCKING_V, VAL))))) -> node.accepted(V, VAL)
+        forall V, VAL. ((exists SET_BLOCKING_V.  ((node.member(V, SET_BLOCKING_V) | forall ANY_QUORUM. node.is_quorum(ANY_QUORUM) -> (exists NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_V. node.member(NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_V, ANY_QUORUM) & node.member(NODE_IN_ANY_QUORUM_AND_SET_BLOCKING_V, SET_BLOCKING_V))) & (forall NODE_IN_SET_BLOCKING_V. node.member(NODE_IN_SET_BLOCKING_V, SET_BLOCKING_V) -> node.heard_accept(V, NODE_IN_SET_BLOCKING_V, VAL))))) -> node.accepted(V, VAL)
 
     invariant [accepted_implies_node_heard_itself_accept]
         forall N, V. (node.accepted(N, V)) -> node.heard_accept(N, N, V)
@@ -60,7 +60,7 @@ private {
 
     invariant [confirmed_implies_there_exists_quorum_accepting_value]
         forall N, V . node.confirmed(N, V) ->
-            (exists Q. node.is_quorum_of(Q, N) & (forall NODE_IN_Q. node.member(NODE_IN_Q, Q) -> node.heard_accept(N, NODE_IN_Q, V)))
+            (exists Q. (node.is_quorum(Q) & node.member(N, Q)) & (forall NODE_IN_Q. node.member(NODE_IN_Q, Q) -> node.heard_accept(N, NODE_IN_Q, V)))
 
     invariant [if_there_exists_quorum_accepting_value_then_confirmed]
         forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & (forall NODE_IN_Q. node.member(NODE_IN_Q, Q) -> node.heard_accept(N, NODE_IN_Q, V))) -> node.confirmed(N, V))

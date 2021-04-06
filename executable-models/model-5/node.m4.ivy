@@ -15,13 +15,6 @@ object node = {
     axiom (is_quorum(S) & is_quorum(T)) -> INTERSECT(S, T)
     axiom (forall X. member(X, S)) -> is_quorum(S)
 
-    relation is_quorum_of(S:set_t, X:id_t)
-    definition is_quorum_of(S, X) = is_quorum(S) & member(X, S)
-
-    relation is_v_blocking(X:id_t, S:set_t)
-    definition is_v_blocking(X, S) = member(X, S) | forall T. is_quorum(T) -> INTERSECT(T, S)
-
-
     # These relations are state variables, and will
     # be updated during actions below.
     relation voted(SELF:id_t, VAL:val_t)
