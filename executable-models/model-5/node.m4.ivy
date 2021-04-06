@@ -4,6 +4,7 @@ include(`relation.m4.ivy')
 
 object node = {
 
+
     # It does not make much sense to talk about
     # a network containing only one node.
     axiom exists X:id_t, Y. X ~= Y
@@ -11,19 +12,9 @@ object node = {
     relation member(X:id_t, S:set_t)
     axiom exists S. forall X. member(X, S)
 
-    relation intersect(S:set_t, T:set_t)
-    definition intersect(S, T) = exists N. member(N, S) & member(N, T)
-
     relation is_quorum(S:set_t)
-    axiom (is_quorum(S) & is_quorum(T)) -> intersect(S, T)
+    axiom (is_quorum(S) & is_quorum(T)) -> INTERSECT(S, T)
     axiom (forall X. member(X, S)) -> is_quorum(S)
-
-    relation is_quorum_of(S:set_t, X:id_t)
-    definition is_quorum_of(S, X) = is_quorum(S) & member(X, S)
-
-    relation is_v_blocking(X:id_t, S:set_t)
-    definition is_v_blocking(X, S) = member(X, S) | forall T. is_quorum(T) -> intersect(T, S)
-
 
     # These relations are state variables, and will
     # be updated during actions below.
