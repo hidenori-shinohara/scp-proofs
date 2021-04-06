@@ -60,7 +60,7 @@ private {
 
     invariant [confirmed_implies_there_exists_quorum_accepting_value]
         forall N, V . node.confirmed(N, V) ->
-            (exists Q. IS_QUORUM_OF(Q, N) & HEARD_SET_ACCEPT(N, Q, V))
+            (exists Q. node.is_quorum_of(Q, N) & HEARD_SET_ACCEPT(N, Q, V))
 
     invariant [if_there_exists_quorum_accepting_value_then_confirmed]
         forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & HEARD_SET_ACCEPT(N, Q, V)) -> node.confirmed(N, V))
