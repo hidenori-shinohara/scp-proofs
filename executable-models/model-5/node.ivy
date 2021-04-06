@@ -1,5 +1,7 @@
 #lang ivy1.7
 
+
+
 object node = {
 
     # It does not make much sense to talk about
@@ -39,99 +41,41 @@ object node = {
         heard_accept(SELF, SRC, VAL) := false;
     }
 
-    # The remaining relations are definitions, used as
-    # abbreviations inside logical formulas elsewhere.
-    relation heard_set_vote_or_accept(SELF:id_t, SET:set_t, VAL:val_t)
-    definition heard_set_vote_or_accept(SELF, S, VAL) =
-        forall V. member(V, S) ->
-            (
-                heard_vote(SELF, V, VAL) |
-                heard_accept(SELF, V, VAL)
-            )
-
-    relation heard_set_accept(SELF:id_t, SET:set_t, VAL:val_t)
-    definition heard_set_accept(SELF, S, VAL) =
-        forall V. member(V, S) -> heard_accept(SELF, V, VAL)
-
-    relation accept_condition_1(SELF:id_t, VAL:val_t)
-    definition accept_condition_1(SELF, VAL) =
-        exists Q.
-            (
-                is_quorum(Q) &
-                member(SELF, Q) &
-                heard_set_vote_or_accept(SELF, Q, VAL)
-            )
-
-    # The definition allows a v-blocking set that contains v itself
-    # to let v accept a value. However, it would never happen.
-    relation accept_condition_2(SELF:id_t, VAL:val_t)
-    definition accept_condition_2(SELF, VAL) =
-        exists S.
-            (
-                is_v_blocking(SELF, S) &
-                ~member(SELF, S) &
-                heard_set_accept(SELF, S, VAL)
-            )
-
-    relation ready_to_accept_but_have_not_accepted(SELF:id_t, VAL:val_t)
-    definition ready_to_accept_but_have_not_accepted(SELF, VAL) =
-        ~accepted(SELF, VAL) &
-        (accept_condition_1(SELF, VAL) |
-	     accept_condition_2(SELF, VAL))
-
-    relation ready_to_confirm_but_have_not_confirmed(SELF:id_t, VAL:val_t)
-    definition ready_to_confirm_but_have_not_confirmed(SELF, VAL) =
-        ~confirmed(SELF, VAL) &
-        exists Q.
-            (
-                is_quorum(Q) &
-                member(SELF, Q) &
-                heard_set_accept(SELF, Q, VAL)
-            )
-
-    after init {
-        voted(SELF, VAL) := false;
-        accepted(SELF, VAL) := false;
-        confirmed(SELF, VAL) := false;
-        heard_vote(SELF, SRC, VAL) := false;
-        heard_accept(SELF, SRC, VAL) := false;
-    }
-
-    action vote(self_id:id_t, v:val_t) =
+    action vote(self_id:id_t, val:val_t) =
     {
-        require ~voted(self_id, v);
-        voted(self_id, v) := true;
-        heard_vote(self_id, self_id, v) := true;
-        if ready_to_accept_but_have_not_accepted(self_id, v) {
-            accepted(self_id, v) := true;
-            heard_accept(self_id, self_id, v) := true;
+        require ~voted(self_id, val);
+        voted(self_id, val) := true;
+        heard_vote(self_id, self_id, val) := true;
+        if ~node.accepted(self_id, val) & (exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_vote(self_id, NODE_IN_QUORUM_OF_self_id, val) | node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) | (exists SET_BLOCKING_self_id.  (node.is_v_blocking(self_id, SET_BLOCKING_self_id) & (forall NODE_IN_SET_BLOCKING_self_id. node.member(NODE_IN_SET_BLOCKING_self_id, SET_BLOCKING_self_id) -> node.heard_accept(self_id, NODE_IN_SET_BLOCKING_self_id, val))))) {
+            node.accepted(self_id, val) := true;
+            node.heard_accept(self_id, self_id, val) := true;
         };
-        if ready_to_confirm_but_have_not_confirmed(self_id, v) {
-            confirmed(self_id, v) := true;
+        if ~node.confirmed(self_id, val) & exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) {
+            node.confirmed(self_id, val) := true;
         };
     }
 
     action recv_vote(self_id:id_t, src:id_t, val:val_t) =
     {
         heard_vote(self_id, src, val) := true;
-        if ready_to_accept_but_have_not_accepted(self_id, val) {
-            accepted(self_id, val) := true;
-            heard_accept(self_id, self_id, val) := true;
+        if ~node.accepted(self_id, val) & (exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_vote(self_id, NODE_IN_QUORUM_OF_self_id, val) | node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) | (exists SET_BLOCKING_self_id.  (node.is_v_blocking(self_id, SET_BLOCKING_self_id) & (forall NODE_IN_SET_BLOCKING_self_id. node.member(NODE_IN_SET_BLOCKING_self_id, SET_BLOCKING_self_id) -> node.heard_accept(self_id, NODE_IN_SET_BLOCKING_self_id, val))))) {
+            node.accepted(self_id, val) := true;
+            node.heard_accept(self_id, self_id, val) := true;
         };
-        if ready_to_confirm_but_have_not_confirmed(self_id, val) {
-            confirmed(self_id, val) := true;
+        if ~node.confirmed(self_id, val) & exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) {
+            node.confirmed(self_id, val) := true;
         };
     }
 
     action recv_accept(self_id:id_t, src:id_t, val:val_t) =
     {
         heard_accept(self_id, src, val) := true;
-        if ready_to_accept_but_have_not_accepted(self_id, val) {
-            accepted(self_id, val) := true;
-            heard_accept(self_id, self_id, val) := true;
+        if ~node.accepted(self_id, val) & (exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_vote(self_id, NODE_IN_QUORUM_OF_self_id, val) | node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) | (exists SET_BLOCKING_self_id.  (node.is_v_blocking(self_id, SET_BLOCKING_self_id) & (forall NODE_IN_SET_BLOCKING_self_id. node.member(NODE_IN_SET_BLOCKING_self_id, SET_BLOCKING_self_id) -> node.heard_accept(self_id, NODE_IN_SET_BLOCKING_self_id, val))))) {
+            node.accepted(self_id, val) := true;
+            node.heard_accept(self_id, self_id, val) := true;
         };
-        if ready_to_confirm_but_have_not_confirmed(self_id, val) {
-            confirmed(self_id, val) := true;
+        if ~node.confirmed(self_id, val) & exists QUORUM_OF_self_id. (node.is_quorum(QUORUM_OF_self_id) & node.member(self_id, QUORUM_OF_self_id) & (forall NODE_IN_QUORUM_OF_self_id. node.member(NODE_IN_QUORUM_OF_self_id, QUORUM_OF_self_id) -> node.heard_accept(self_id, NODE_IN_QUORUM_OF_self_id, val))) {
+            node.confirmed(self_id, val) := true;
         };
     }
 }

@@ -1,5 +1,5 @@
 #lang ivy1.7
-
+include(`relation.m4.ivy')
 
 include sort
 include node
@@ -32,16 +32,16 @@ private {
         forall SELF, VAL. node.accepted(SELF, VAL) -> (exists NODE. node.voted(NODE, VAL))
 
     invariant [if_node_is_ready_to_accept_it_must_accept]
-        forall N, V. ~~node.accepted(N, V) & (exists QUORUM_OF_N. (node.is_quorum(QUORUM_OF_N) & node.member(N, QUORUM_OF_N) & (forall NODE_IN_QUORUM_OF_N. node.member(NODE_IN_QUORUM_OF_N, QUORUM_OF_N) -> node.heard_vote(N, NODE_IN_QUORUM_OF_N, V) | node.heard_accept(N, NODE_IN_QUORUM_OF_N, V))) | (exists SET_BLOCKING_N.  (node.is_v_blocking(N, SET_BLOCKING_N) & (forall NODE_IN_SET_BLOCKING_N. node.member(NODE_IN_SET_BLOCKING_N, SET_BLOCKING_N) -> node.heard_accept(N, NODE_IN_SET_BLOCKING_N, V)))))
+        forall N, V. ~READY_TO_ACCEPT_BUT_HAVE_NOT_ACCEPTED(N, V)
 
     invariant [if_node_is_ready_to_confirm_it_must_confirm]
-        forall N, V. ~~node.confirmed(N, V) & exists QUORUM_OF_N. (node.is_quorum(QUORUM_OF_N) & node.member(N, QUORUM_OF_N) & (forall NODE_IN_QUORUM_OF_N. node.member(NODE_IN_QUORUM_OF_N, QUORUM_OF_N) -> node.heard_accept(N, NODE_IN_QUORUM_OF_N, V)))
+        forall N, V. ~READY_TO_CONFIRM_BUT_HAVE_NOT_CONFIRMED(N, V)
 
     invariant [if_accept_condition_1_then_must_accept]
-        forall V, VAL. (exists QUORUM_OF_V. (node.is_quorum(QUORUM_OF_V) & node.member(V, QUORUM_OF_V) & (forall NODE_IN_QUORUM_OF_V. node.member(NODE_IN_QUORUM_OF_V, QUORUM_OF_V) -> node.heard_vote(V, NODE_IN_QUORUM_OF_V, VAL) | node.heard_accept(V, NODE_IN_QUORUM_OF_V, VAL)))) -> node.accepted(V, VAL)
+        forall V, VAL. (ACCEPT_CONDITION_1(V, VAL)) -> node.accepted(V, VAL)
 
     invariant [if_accept_condition_2_then_must_accept]
-        forall V, VAL. ((exists SET_BLOCKING_V.  (node.is_v_blocking(V, SET_BLOCKING_V) & (forall NODE_IN_SET_BLOCKING_V. node.member(NODE_IN_SET_BLOCKING_V, SET_BLOCKING_V) -> node.heard_accept(V, NODE_IN_SET_BLOCKING_V, VAL))))) -> node.accepted(V, VAL)
+        forall V, VAL. (ACCEPT_CONDITION_2(V, VAL)) -> node.accepted(V, VAL)
 
     invariant [accepted_implies_node_heard_itself_accept]
         forall N, V. (node.accepted(N, V)) -> node.heard_accept(N, N, V)
@@ -60,10 +60,10 @@ private {
 
     invariant [confirmed_implies_there_exists_quorum_accepting_value]
         forall N, V . node.confirmed(N, V) ->
-            (exists Q. node.is_quorum_of(Q, N) & (forall NODE_IN_Q. node.member(NODE_IN_Q, Q) -> node.heard_accept(N, NODE_IN_Q, V)))
+            (exists Q. node.is_quorum_of(Q, N) & HEARD_SET_ACCEPT(N, Q, V))
 
     invariant [if_there_exists_quorum_accepting_value_then_confirmed]
-        forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & (forall NODE_IN_Q. node.member(NODE_IN_Q, Q) -> node.heard_accept(N, NODE_IN_Q, V))) -> node.confirmed(N, V))
+        forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & HEARD_SET_ACCEPT(N, Q, V)) -> node.confirmed(N, V))
 
     relation heard_quorum_accept(N1:id_t, Q:set_t, V:val_t)
     definition heard_quorum_accept(N1, Q, V) = forall N2. node.member(N2, Q) -> node.heard_accept(N1, N2, V)
