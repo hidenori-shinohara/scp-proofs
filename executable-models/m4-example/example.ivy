@@ -1,0 +1,124 @@
+#lang ivy1.7
+type node
+
+relation eq1(X:node, Y:node)
+definition eq1(X, Y) = X = Y
+
+relation eq2(X:node, Y:node)
+definition eq2(X, Y) = eq1(X, Y) & eq1(X, Y)
+
+relation eq3(X:node, Y:node)
+definition eq3(X, Y) = eq2(X, Y) & eq1(X, Y)
+
+relation eq4(X:node, Y:node)
+definition eq4(X, Y) = eq3(X, Y) & eq1(X, Y)
+
+relation eq5(X:node, Y:node)
+definition eq5(X, Y) = eq4(X, Y) & eq1(X, Y)
+
+relation eq6(X:node, Y:node)
+definition eq6(X, Y) = eq5(X, Y) & eq1(X, Y)
+
+relation eq7(X:node, Y:node)
+definition eq7(X, Y) = eq6(X, Y) & eq1(X, Y)
+
+relation eq8(X:node, Y:node)
+definition eq8(X, Y) = eq7(X, Y) & eq1(X, Y)
+
+relation eq9(X:node, Y:node)
+definition eq9(X, Y) = eq8(X, Y) & eq1(X, Y)
+
+relation eq10(X:node, Y:node)
+definition eq10(X, Y) = eq9(X, Y) & eq1(X, Y)
+
+relation eq11(X:node, Y:node)
+definition eq11(X, Y) = eq10(X, Y) & eq1(X, Y)
+
+relation eq12(X:node, Y:node)
+definition eq12(X, Y) = eq11(X, Y) & eq1(X, Y)
+
+relation eq13(X:node, Y:node)
+definition eq13(X, Y) = eq12(X, Y) & eq1(X, Y)
+
+relation eq14(X:node, Y:node)
+definition eq14(X, Y) = eq13(X, Y) & eq1(X, Y)
+
+relation eq15(X:node, Y:node)
+definition eq15(X, Y) = eq14(X, Y) & eq1(X, Y)
+
+relation eq16(X:node, Y:node)
+definition eq16(X, Y) = eq15(X, Y) & eq1(X, Y)
+
+relation eq17(X:node, Y:node)
+definition eq17(X, Y) = eq16(X, Y) & eq1(X, Y)
+
+relation eq18(X:node, Y:node)
+definition eq18(X, Y) = eq17(X, Y) & eq1(X, Y)
+
+relation eq19(X:node, Y:node)
+definition eq19(X, Y) = eq18(X, Y) & eq1(X, Y)
+
+relation eq20(X:node, Y:node)
+definition eq20(X, Y) = eq19(X, Y) & eq1(X, Y)
+
+relation eq21(X:node, Y:node)
+definition eq21(X, Y) = eq20(X, Y) & eq1(X, Y)
+
+relation eq22(X:node, Y:node)
+definition eq22(X, Y) = eq21(X, Y) & eq1(X, Y)
+
+relation eq23(X:node, Y:node)
+definition eq23(X, Y) = eq22(X, Y) & eq1(X, Y)
+
+relation eq24(X:node, Y:node)
+definition eq24(X, Y) = eq23(X, Y) & eq1(X, Y)
+
+relation eq25(X:node, Y:node)
+definition eq25(X, Y) = eq24(X, Y) & eq1(X, Y)
+
+relation eq26(X:node, Y:node)
+definition eq26(X, Y) = eq25(X, Y) & eq1(X, Y)
+
+relation eq27(X:node, Y:node)
+definition eq27(X, Y) = eq26(X, Y) & eq1(X, Y)
+
+relation eq28(X:node, Y:node)
+definition eq28(X, Y) = eq27(X, Y) & eq1(X, Y)
+
+relation eq29(X:node, Y:node)
+definition eq29(X, Y) = eq28(X, Y) & eq1(X, Y)
+
+relation eq30(X:node, Y:node)
+definition eq30(X, Y) = eq29(X, Y) & eq1(X, Y)
+
+relation eq31(X:node, Y:node)
+definition eq31(X, Y) = eq30(X, Y) & eq1(X, Y)
+
+relation eq32(X:node, Y:node)
+definition eq32(X, Y) = eq31(X, Y) & eq1(X, Y)
+
+relation eq33(X:node, Y:node)
+definition eq33(X, Y) = eq32(X, Y) & eq1(X, Y)
+
+relation eq34(X:node, Y:node)
+definition eq34(X, Y) = eq33(X, Y) & eq1(X, Y)
+
+relation eq35(X:node, Y:node)
+definition eq35(X, Y) = eq34(X, Y) & eq1(X, Y)
+
+relation eq36(X:node, Y:node)
+definition eq36(X, Y) = eq35(X, Y) & eq1(X, Y)
+
+relation eq37(X:node, Y:node)
+definition eq37(X, Y) = eq36(X, Y) & eq1(X, Y)
+
+relation eq38(X:node, Y:node)
+definition eq38(X, Y) = eq37(X, Y) & eq1(X, Y)
+
+relation eq39(X:node, Y:node)
+definition eq39(X, Y) = eq38(X, Y) & eq1(X, Y)
+
+relation eq40(X:node, Y:node)
+definition eq40(X, Y) = eq39(X, Y) & eq1(X, Y)
+
+invariant forall X:node, Y. X = Y -> eq40(X, Y)
