@@ -1,0 +1,228 @@
+#lang ivy1.7
+type id_t
+type set_t
+type val_t
+
+# TODO: The following interpretation should be removed to work with an arbitrarily sized network.
+# This is added here in order to test smaller cases.
+interpret id_t -> bv[2]
+
+object node = {
+
+
+    # These relations are state variables, and will
+    # be updated during actions below.
+    relation voted(SELF:id_t, VAL:val_t)
+    relation accepted(SELF:id_t, VAL:val_t)
+    relation confirmed(SELF:id_t, VAL:val_t)
+    relation heard_vote(SELF:id_t, SRC:id_t, VAL:val_t)
+    relation heard_accept(SELF:id_t, SRC:id_t, VAL:val_t)
+
+    # It does not make much sense to talk about
+    # a network containing only one node.
+    axiom exists X:id_t, Y. X ~= Y
+
+    relation member(X:id_t, S:set_t)
+    axiom exists S. forall X. member(X, S)
+
+    relation intersect(S:set_t, T:set_t)
+    definition intersect(S, T) = exists N. member(N, S) & member(N, T)
+
+    relation is_quorum(S:set_t)
+    axiom (is_quorum(S) & is_quorum(T)) -> intersect(S, T)
+    axiom (forall X. member(X, S)) -> is_quorum(S)
+
+    relation is_quorum_of(S:set_t, X:id_t)
+    definition is_quorum_of(S, X) = is_quorum(S) & member(X, S)
+
+    relation is_v_blocking(X:id_t, S:set_t)
+    definition is_v_blocking(X, S) = member(X, S) | forall T. is_quorum(T) -> intersect(T, S)
+    
+    # The remaining relations are definitions, used as
+    # abbreviations inside logical formulas elsewhere.
+    relation heard_set_vote_or_accept(SELF:id_t, SET:set_t, VAL:val_t)
+    definition heard_set_vote_or_accept(SELF, S, VAL) =
+        forall V. member(V, S) ->
+            (
+                heard_vote(SELF, V, VAL) |
+                heard_accept(SELF, V, VAL)
+            )
+
+    relation heard_set_accept(SELF:id_t, SET:set_t, VAL:val_t)
+    definition heard_set_accept(SELF, S, VAL) =
+        forall V. member(V, S) -> heard_accept(SELF, V, VAL)
+
+    relation accept_condition_1(SELF:id_t, VAL:val_t)
+    definition accept_condition_1(SELF, VAL) =
+        exists Q.
+            (
+                is_quorum(Q) &
+                member(SELF, Q) &
+                heard_set_vote_or_accept(SELF, Q, VAL)
+            )
+
+    # The definition allows a v-blocking set that contains v itself
+    # to let v accept a value. However, it would never happen.
+    relation accept_condition_2(SELF:id_t, VAL:val_t)
+    definition accept_condition_2(SELF, VAL) =
+        exists S.
+            (
+                is_v_blocking(SELF, S) &
+                ~member(SELF, S) &
+                heard_set_accept(SELF, S, VAL)
+            )
+
+    relation ready_to_accept_but_have_not_accepted(SELF:id_t, VAL:val_t)
+    definition ready_to_accept_but_have_not_accepted(SELF, VAL) =
+        ~accepted(SELF, VAL) &
+        (accept_condition_1(SELF, VAL) |
+	     accept_condition_2(SELF, VAL))
+
+    relation ready_to_confirm_but_have_not_confirmed(SELF:id_t, VAL:val_t)
+    definition ready_to_confirm_but_have_not_confirmed(SELF, VAL) =
+        ~confirmed(SELF, VAL) &
+        exists Q.
+            (
+                is_quorum(Q) &
+                member(SELF, Q) &
+                heard_set_accept(SELF, Q, VAL)
+            )
+
+    after init {
+        voted (SELF, VAL) := false;
+        accepted(SELF, VAL) := false;
+        confirmed(SELF, VAL) := false;
+        heard_vote(SELF, SRC, VAL) := false;
+        heard_accept(SELF, SRC, VAL) := false;
+    }
+
+    action vote(self_id:id_t, val:val_t) =
+    {
+        require ~voted(self_id, val);
+        voted(self_id, val) := true;
+        heard_vote(self_id, self_id, val) := true;
+        if ready_to_accept_but_have_not_accepted(self_id, val) {
+            accepted(self_id, val) := true;
+            heard_accept(self_id, self_id, val) := true;
+        };
+        if ready_to_confirm_but_have_not_confirmed(self_id, val) {
+            confirmed(self_id, val) := true;
+        };
+    }
+
+    action recv_vote(self_id:id_t, src:id_t, val:val_t) =
+    {
+        heard_vote(self_id, src, val) := true;
+        if ready_to_accept_but_have_not_accepted(self_id, val) {
+            accepted(self_id, val) := true;
+            heard_accept(self_id, self_id, val) := true;
+        };
+        if ready_to_confirm_but_have_not_confirmed(self_id, val) {
+            confirmed(self_id, val) := true;
+        };
+    }
+
+    action recv_accept(self_id:id_t, src:id_t, val:val_t) =
+    {
+        heard_accept(self_id, src, val) := true;
+        if ready_to_accept_but_have_not_accepted(self_id, val) {
+            accepted(self_id, val) := true;
+            heard_accept(self_id, self_id, val) := true;
+        };
+        if ready_to_confirm_but_have_not_confirmed(self_id, val) {
+            confirmed(self_id, val) := true;
+        };
+    }
+}
+
+object network =
+{
+    # Deliver the message "src voted v" to dst.
+    action deliver_vote(src:id_t, dst:id_t, v:val_t) =
+    {
+        require node.voted(src, v);
+        require ~node.heard_vote(dst, src, v);
+        call node.recv_vote(dst, src, v);
+    }
+
+    # Deliver the message "src accepted v" to dst.
+    action deliver_accept(src:id_t, dst:id_t, v:val_t) =
+    {
+        require node.accepted(src, v);
+        require ~node.heard_accept(dst, src, v);
+        call node.recv_accept(dst, src, v);
+    }
+}
+
+# Ivy checks that the following invariants always hold if we start with the initialization state
+# (i.e., `after init`) and continuously apply the exported actions below.
+
+# We need a bunch of auxiliary invariants for the prover to avoid spurious CTIs
+private {
+    invariant [voted_or_not_voted] forall V, VAL. node.voted(V, VAL) | ~node.voted(V, VAL)
+
+    invariant [accepted_or_not_accepted] forall V, VAL. node.accepted(V, VAL) | ~node.accepted(V, VAL)
+
+    invariant [heard_accept_or_not_heard_accept] forall V, W, VAL. node.heard_accept(V, W, VAL) | ~node.heard_accept(V, W, VAL)
+
+    invariant [heard_vote_or_not_heard_vote] forall V, W, VAL. node.heard_vote(V, W, VAL) | ~node.heard_vote(V, W, VAL)
+
+    invariant [voted_implies_heard_itself_vote] forall V, VAL. node.voted(V, VAL) -> node.heard_vote(V, V, VAL)
+
+    invariant [accepted_implies_heard_itself_accept] forall V, VAL. node.accepted(V, VAL) -> node.heard_accept(V, V, VAL)
+
+    invariant [heard_vote_implies_voted]
+        forall SELF, OTHER, VAL. node.heard_vote(SELF, OTHER, VAL) -> node.voted(OTHER, VAL)
+
+    invariant [heard_accept_implies_accepted]
+        forall SELF, OTHER, VAL. node.heard_accept(SELF, OTHER, VAL) -> node.accepted(OTHER, VAL)
+
+    invariant [accept_means_at_least_one_vote]
+        forall SELF, VAL. node.accepted(SELF, VAL) -> (exists NODE. node.voted(NODE, VAL))
+
+    invariant [if_node_is_ready_to_accept_it_must_accept]
+        forall N, V. ~node.ready_to_accept_but_have_not_accepted(N, V)
+
+    invariant [if_node_is_ready_to_confirm_it_must_confirm]
+        forall N, V. ~node.ready_to_confirm_but_have_not_confirmed(N, V)
+
+    invariant [if_accept_condition_1_then_must_accept]
+        forall V, VAL. (node.accept_condition_1(V, VAL)) -> node.accepted(V, VAL)
+
+    invariant [if_accept_condition_2_then_must_accept]
+        forall V, VAL. (node.accept_condition_2(V, VAL)) -> node.accepted(V, VAL)
+
+    invariant [accepted_implies_node_heard_itself_accept]
+        forall N, V. (node.accepted(N, V)) -> node.heard_accept(N, N, V)
+
+    invariant [voted_implies_node_heard_itself_vote]
+        forall N, V. node.voted(N, V) -> node.heard_vote(N, N, V)
+
+    invariant [accepted_implies_at_least_one_node_voted]
+        forall V. (exists N1. node.accepted(N1, V)) -> (exists N2. node.voted(N2, V))
+
+    invariant [confirmed_implies_accepted]
+        forall N, V. node.confirmed(N, V) -> node.accepted(N, V)
+
+    invariant [confirmed_implies_there_exists_quorum_accepting_value]
+        forall N, V . node.confirmed(N, V) ->
+            (exists Q. node.is_quorum_of(Q, N) & node.heard_set_accept(N, Q, V))
+
+    invariant [if_there_exists_quorum_accepting_value_then_confirmed]
+        forall N, V. ((exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V)) -> node.confirmed(N, V))
+
+    relation heard_quorum_accept(N1:id_t, Q:set_t, V:val_t)
+    definition heard_quorum_accept(N1, Q, V) = forall N2. node.member(N2, Q) -> node.heard_accept(N1, N2, V)
+
+    invariant [heard_quorum_accept_implies_confirmed]
+        forall N1, V. (exists Q. node.is_quorum(Q) & node.member(N1, Q) & heard_quorum_accept(N1, Q, V))
+                    -> node.confirmed(N1, V)
+}
+
+invariant [confirm_same_after_sufficient_messages]
+    forall VAL. (exists NODE1, NODE2. node.confirmed(NODE1, VAL) & ~node.confirmed(NODE2, VAL))
+        -> (exists NODE3, NODE4. node.accepted(NODE3, VAL) & ~node.heard_accept(NODE4, NODE3, VAL))
+
+export network.deliver_vote
+export network.deliver_accept
+export node.vote
