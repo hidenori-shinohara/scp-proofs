@@ -31,8 +31,6 @@ object node = {
 
     axiom exists Q . (forall N . member(N, Q) <-> intact(N)) & is_quorum(Q)
 
-
-
     # These relations are state variables, and will
     # be updated during actions below.
     relation voted(SELF:id_t, VAL:val_t)
@@ -108,19 +106,29 @@ object node = {
     }
 
     relation every_intact_node_in_this_set_accepted(SET:set_t, VAL:val_t)
-    definition every_intact_node_in_this_set_accepted(SET, VAL) = forall N. intact(N) & member(N, SET) -> accepted(N, VAL)
+    definition every_intact_node_in_this_set_accepted(SET, VAL) =
+        forall N. intact(N) & member(N, SET) -> accepted(N, VAL)
 
     relation accepted_by_every_intact_node(VAL:val_t)
     definition accepted_by_every_intact_node(VAL) = forall N. intact(N) -> accepted(N, VAL)
 
     relation only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t)
-    definition only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t) = forall N. member(N, SET) -> intact(N) & accepted(N, VAL)
+    definition only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t) =
+        forall N. member(N, SET) -> intact(N) & accepted(N, VAL)
 
     action assume_cascade_theorem = {
-        # The cascade theorem is a higher-order property that we cannot express in first-order logic. Instead, we instantiate it only when needed using assume statements in the transition system.
-        # In English: if a quorum of an intact node accepts val, then either all intact nodes accept val or there is an intact node blocked by a set of all the intact nodes that accept val.
+        # The cascade theorem is a higher-order property that we cannot express in first-order logic.
+        # Instead, we instantiate it only when needed using assume statements in the transition system.
+        # If a quorum of an intact node accepts val, then one of the following is true:
+        # * All intact nodes have accepted val, _or_
+        # * There is an intact node blocked by a set of intact nodes that have accepted val.
+
         assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
-            -> (accepted_by_every_intact_node(VAL) | (exists N2, S. intact(N2) & ~accepted(N2, VAL) & is_v_blocking(N2, S) & only_contains_intact_nodes_that_accepted(S, VAL)));
+            -> (accepted_by_every_intact_node(VAL) |
+                (exists N2, S. intact(N2) &
+                               ~accepted(N2, VAL) &
+                               is_v_blocking(N2, S) &
+                               only_contains_intact_nodes_that_accepted(S, VAL)));
     }
 
     action vote(self_id:id_t, v:val_t) =
