@@ -1,10 +1,6 @@
 #lang ivy1.7
 
 object node = {
-    # For some reason treating the following relation definitions as assignments in
-    # an 'after init' block means that Ivy considers the possibility of the
-    # relations having different values, when exploring possible prestates for
-    # actions, though it seems like it should not.
 
     relation member(X:id_t, S:set_t)
     
@@ -119,10 +115,10 @@ object node = {
 
     relation only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t)
     definition only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t) = forall N. member(N, SET) -> intact(N) & accepted(N, VAL)
+
     action assume_cascade_theorem = {
-        # the cascade theorem:
-        # NOTE: the cascade theorem is a higher-order property that we cannot express in first-order logic. Instead, we instantiate it only when needed using assume statements in the transition system.
-        # In English: if a set of nodes including a quorum of an intact node accepts val, then either all intact nodes accept val or there is an intact node blocked by a set of all the intact nodes that accept val.
+        # The cascade theorem is a higher-order property that we cannot express in first-order logic. Instead, we instantiate it only when needed using assume statements in the transition system.
+        # In English: if a quorum of an intact node accepts val, then either all intact nodes accept val or there is an intact node blocked by a set of all the intact nodes that accept val.
         assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
             -> (accepted_by_every_intact_node(VAL) | (exists N2, S. intact(N2) & ~accepted(N2, VAL) & is_v_blocking(N2, S) & only_contains_intact_nodes_that_accepted(S, VAL)));
     }
