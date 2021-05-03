@@ -1,25 +1,44 @@
-This directory contains a model for a very simple FBAS.
+This directory contains a model for a relatively general FBAS possibly containing Byzantine nodes.
 
-# Description of the network
+Run `make proof` and Ivy verifies that the invariants specified in `proof.ivy` hold after initialization and any exported actions.
 
-* There are four nodes.
-* `Q(v_i) = { S | S \subset {0, 1, 2, 3}, |S| = 3, v_i \in S }`.
-* Node 0, 1, and 2 are well-behaved and Node 3 is a Byzantine node.
-    * Implications:
-        * Node 3 may alter its state variables at any point
-            * e.g., It may change `heard_vote` even if it hasn't heard the vote.
-        * Node 0, 1, and 2 are all well-behaved and intact since {0, 1, 2} is a quorum.
+# Abstractions
 
-# How to use this
-There are three ways to use this model. Executable model, fuzz testing, and verification.
+The abstractions used in this model are heavily influenced by, if not identical to, what is described in https://github.com/stellar/scp-proofs#the-model.
 
-1. Executable model.
-    * Run `make && ./executable` to start a REPL environment.
-      You can invoke actions to manually examine the model.
-      For instance, `node.vote(0, 1)` makes node 0 vote for statement 1.
-2. Fuzz testing
-    * Run `make && ./fuzz`.
-      Ivy randomly generates a sequence of actions.
-      You can pass the seed as a command line argument. (e.g., `./fuzz seed=123`)
-3. Formal verification
-    * Run `make proof` and Ivy verifies that the invariants specified in `proof.ivy` hold after initialization and any exported actions.
+More specifically,
+
+1. The intersection of two quorums of intertwined nodes contains a well-behaved node.
+1. The intersection of two quorums of intact nodes contains an intact node.
+1. The set of intact nodes is a quorum.
+1. If `Q` is a quorum of an intact node and if all members of `Q` have accepted `val`, then either all intact nodes have accepted `val`, or there is an intact node `n` such that `n` has not accepted `val` and `n` is blocked by a set of intact nodes that have all accepted `val`.
+1. If an intact node is blocked by a set of nodes S, then S contains an intact node.
+
+Note that 1-3 and 5 have been copied and pasted from the [the abstractions used by Giuliano Losa](https://github.com/stellar/scp-proofs#the-model), and the 4th one is almost identical.
+
+Here is a proof that any FBAS with quorum intersection satisfies 4:
+
+## Proof of 4
+
+Let `Q` be a quorum containing an intact node.
+Suppose that all members of `Q` have accepted `val`.
+Let `S` be the set of all nodes that have accepted `val`.
+Clearly, `Q ⊆ S`.
+
+Define
+* `S⁺ = S \ B` (the set of intact nodes in `S`)
+* `S⁻ = (V \ S) \ B` (the set of intact nodes _not_ in `S`)
+
+By Theorem 10 on P.16 of [The Stellar Consensus Protocol: A Federated Model for Internet-level Consensus](https://www.stellar.org/papers/stellar-consensus-protocol) (the white paper), we conclude that:
+
+* `S⁻` is empty, _or_
+  * This happens if and only if _all_ intact nodes are in `S`.
+    Since we defined `S` to be the set of all nodes that have accepted `val`, we conclude that all intact nodes have accepted `val`.
+* There exists `n ∈ S⁻` such that `S⁺` is `n`-blocking.
+  * Since `S⁻` is the set of intact nodes _not_ in `S`, `n` is intact.
+    Furthermore, since `n` is not in `S`, `n` has not accepted `val`.
+    Finally, `S⁺` is exactly _the_ set of intact nodes that have accepted `val`.
+    Therefore, we can conclude that there is an intact node `n` such that `n` has not accepted `val` and `n` is blocked by _a_ set of intact nodes that have all accepted `val`.
+    (Note that the last sentence is slightly weaker than what we could say. However, it is unnecessary for this abstraction.)
+
+Therefore, the 4th statement is always satisfied by any FBAS with quorum intersection.
