@@ -119,16 +119,12 @@ object node = {
 
     relation only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t)
     definition only_contains_intact_nodes_that_accepted(SET:set_t, VAL:val_t) = forall N. member(N, SET) -> intact(N) & accepted(N, VAL)
-
-    individual v0:val_t
-    individual q0:set_t
-
     action assume_cascade_theorem = {
         # the cascade theorem:
         # NOTE: the cascade theorem is a higher-order property that we cannot express in first-order logic. Instead, we instantiate it only when needed using assume statements in the transition system.
         # In English: if a set of nodes including a quorum of an intact node accepts val, then either all intact nodes accept val or there is an intact node blocked by a set of all the intact nodes that accept val.
-        assume quorum_containing_intact_nodes(q0) & every_intact_node_in_this_set_accepted(q0, v0)
-            -> (accepted_by_every_intact_node(v0) | (exists N2, S. intact(N2) & ~accepted(N2, v0) & is_v_blocking(N2, S) & only_contains_intact_nodes_that_accepted(S, v0)));
+        assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
+            -> (accepted_by_every_intact_node(VAL) | (exists N2, S. intact(N2) & ~accepted(N2, VAL) & is_v_blocking(N2, S) & only_contains_intact_nodes_that_accepted(S, VAL)));
     }
 
     action vote(self_id:id_t, v:val_t) =
