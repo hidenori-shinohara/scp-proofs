@@ -21,3 +21,43 @@
 - node.ready_to_accept_but_have_not_accepted(0,1) = false
 - node.ready_to_accept_but_have_not_accepted(1,1) = false
 - node.ready_to_accept_but_have_not_accepted(2,1) = false
+
+
+call network.deliver_accept
+{
+    [
+        fml:src = 2
+        fml:v = 1
+        fml:dst = 1
+    ]
+    network.ivy: line 16: assume node.accepted(fml:src,fml:v)
+
+    network.ivy: line 17: assume ~node.heard_accept(fml:dst,fml:src,fml:v)
+
+    network.ivy: line 18: call node.recv_accept(fml:dst, fml:src, fml:v)
+    {
+        [
+            fml:val = 1
+            fml:src_a = 2
+            fml:self_id = 1
+        ]
+        node.ivy: line 164: node.heard_accept(fml:self_id,fml:src,fml:val) := true
+
+        [
+            node.heard_accept(1,2,1) = true
+        ]
+        node.ivy: line 170: node.confirmed(fml:self_id,fml:val) := true
+
+        [
+            node.confirmed(1,1) = true
+            node.ready_to_confirm_but_have_not_confirmed(1,1) = false
+        ]
+        node.ivy: line 172: call node.assume_cascade_theorem
+        {
+            node.ivy: line 130: assume node.quorum_containing_intact_nodes(node.q0) & node.every_intact_node_in_this_set_accepted(node.q0,node.v0) -> node.accepted_by_every_intact_node(node.v0) | (exists S,N2. node.intact(N2) & ~node.accepted(N2,node.v0) & node.is_v_blocking(N2,S) & node.only_contains_intact_nodes_that_accepted(S,node.v0))
+
+        }
+
+    }
+
+}
