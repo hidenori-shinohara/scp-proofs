@@ -6,7 +6,7 @@ Run `make proof` and Ivy verifies that the invariants specified in `proof.ivy` h
 
 The abstractions used in this model are heavily influenced by, if not identical to, the [the abstractions used by Giuliano Losa](https://github.com/stellar/scp-proofs#the-model).
 
-More specifically, we will consider any set of nodes with the notion of quorums, blocking sets, and intact nodes that follow:
+More specifically, we will consider any set of nodes with the notion of quorums, blocking sets, and intact nodes that satisfy the axioms:
 
 1. Intact nodes are well-behaved.
 1. The intersection of two quorums of intact nodes contains an intact node.
@@ -21,7 +21,8 @@ More mathematically speaking, let `V` be a set of nodes such that:
 
 And we consider any set `V` that satisfies the 5 statements above.
 
-It is important to emphasize that we consider any configuration as long as they satisfy the statements above, and we do not consider other concepts such as quorum slices.
+It is important to emphasize that we consider any configuration as long as they satisfy the statements above, and we do not consider other concepts.
+Specifically, quorums are not defined in terms of quorum slices and any sets can block any nodes as long as they satisfy the 5 axioms.
 
 Of course, this abstraction makes sense only if all the statements above are indeed in correct in the white paper, and the following is a sketch of a proof for each.
 
