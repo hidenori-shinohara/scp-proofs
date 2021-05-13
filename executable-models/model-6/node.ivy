@@ -5,20 +5,12 @@ object node = {
     relation member(X:id_t, S:set_t)
     
     relation well_behaved(N:id_t)
-    relation intertwined(N:id_t)
     relation intact(N:id_t)
     
-    # intact nodes are intertwined
-    axiom intact(N) -> intertwined(N)
-    # intertwined nodes are well-behaved
-    axiom intertwined(N) -> well_behaved(N)
+    # intact nodes are well-behaved
+    axiom intact(N) -> well_behaved(N)
 
     relation is_quorum(S:set_t)
-
-    relation quorum_containing_intertwined_nodes(Q:set_t)
-    definition quorum_containing_intertwined_nodes(Q) = exists V . intertwined(V) & is_quorum(Q) & member(V, Q)
-
-    axiom (quorum_containing_intertwined_nodes(Q1) & quorum_containing_intertwined_nodes(Q2)) -> (exists N3 . well_behaved(N3) & member(N3, Q1) & member(N3, Q2))
 
     relation quorum_containing_intact_nodes(Q:set_t)
     definition quorum_containing_intact_nodes(Q) = exists V . intact(V) & is_quorum(Q) & member(V, Q)

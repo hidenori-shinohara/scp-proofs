@@ -9,8 +9,6 @@ include network
 
 # We need a bunch of auxiliary invariants for the prover to avoid spurious CTIs
 private {
-    # NOTE: In this specific model, all well behaved nodes are intact and intertwined.
-    # They are not generally true, so some of the invariants here will not hold in general.
     invariant [voted_or_not_voted] forall V, VAL. node.voted(V, VAL) | ~node.voted(V, VAL)
 
     invariant [accepted_or_not_accepted] forall V, VAL. node.accepted(V, VAL) | ~node.accepted(V, VAL)
