@@ -109,10 +109,6 @@ object node = {
     definition every_intact_node_in_this_set_accepted(SET, VAL) =
         forall N. intact(N) & member(N, SET) -> accepted(N, VAL)
 
-    relation every_node_in_this_set_accepted(SET:set_t, VAL:val_t)
-    definition every_node_in_this_set_accepted(SET, VAL) =
-        forall N. member(N, SET) -> accepted(N, VAL)
-
     relation accepted_by_every_intact_node(VAL:val_t)
     definition accepted_by_every_intact_node(VAL) = forall N. intact(N) -> accepted(N, VAL)
 
@@ -123,15 +119,11 @@ object node = {
     action assume_cascade_theorem = {
         # The cascade theorem is a higher-order property that we cannot express in first-order logic.
         # Instead, we instantiate it only when needed using assume statements in the transition system.
-        # If a quorum of an intact node accepts val, then one of the following is true:
+        # If Q is a quorum of an intact node and every intact member of Q accepts val, then one of the following is true:
         # * All intact nodes have accepted val, _or_
         # * There is an intact node blocked by a set of intact nodes that have accepted val.
-
-        # Should the second part of the assumption be every_node_in_this_set_accepted or every_intact_node_in_this_set_accepted?
-        # It looks like https://github.com/stellar/scp-proofs/blob/master/SCP-safety-2.ivy used every_intact_node_in_this_set_accepted,
-        # but it doesn't seem super consistent with the comment?
-        # Also, it doesn't seem consistent with the white paper.
-        assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_node_in_this_set_accepted(Q, VAL)
+        # TODO: Add references to this theorem
+        assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
             -> (accepted_by_every_intact_node(VAL) |
                 (exists N2, S. intact(N2) &
                                ~accepted(N2, VAL) &
