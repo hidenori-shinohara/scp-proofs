@@ -48,12 +48,6 @@ private {
     invariant [voted_implies_node_heard_itself_vote]
         forall N, V. (node.intact(N) & node.voted(N, V)) -> node.heard_vote(N, N, V)
 
-#     Commenting this out for now.
-#     I'm not 100% sure if an intact node needs to have heard another intact node accept before it confirms.
-#     Is it more reasonable to say it has heard a well-behaved node accept? I'm not certain.
-#     invariant [confirmed_implies_it_heard_at_least_one_node_accept]
-#         forall N, V. (node.intact(N) & node.confirmed(N,V)) -> exists N2. N ~= N2 & node.intact(N2) & node.heard_accept(N,N2,V)
-
     invariant [accepted_implies_at_least_one_node_voted]
         forall V. (exists N1. node.intact(N1) & node.accepted(N1, V)) -> (exists N2. node.intact(N2) & node.voted(N2, V))
 
