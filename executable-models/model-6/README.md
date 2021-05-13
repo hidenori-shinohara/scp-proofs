@@ -25,6 +25,12 @@ Of course, this abstraction makes sense only if all the statements above are ind
 ## Intertwined nodes are well-behaved.
 
 The term _intertwined_ is not defined in the white paper, but it is defined in [Fast and secure global payments with Stellar](http://www.scs.stanford.edu/~dm/home/papers/lokhava:stellar-core.pdf) and [Simplified SCP](https://www.scs.stanford.edu/~dm/blog/simplified-scp.html).
+However, for the purpose of this abstraction, we turn this into a node's property by defining
+
+> A non-faulty node `v` is intertwined if and only if all of its quorums intersect any quorum of any non-faulty node.
+
+TODO: make sure that this is indeed correct
+
 By definition, intertwined nodes must be well-behaved.
 
 ## Intact nodes are intertwined.
