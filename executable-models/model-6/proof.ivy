@@ -54,18 +54,20 @@ private {
     invariant [confirmed_implies_accepted]
         forall N, V. (node.intact(N) & node.confirmed(N, V)) -> node.accepted(N, V)
 
+    relation heard_my_quorum_accept(N:id_t, V:val_t)
+    definition heard_my_quorum_accept(N, V) =
+        exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V)
+
     invariant [confirmed_implies_there_exists_quorum_accepting_value]
         forall N, V . (node.intact(N) & node.confirmed(N, V)) ->
-            (exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V))
+            heard_my_quorum_accept(N, V)
+
 
     invariant [if_there_exists_quorum_accepting_value_then_confirmed]
         forall N, V. ((node.intact(N) & exists Q. node.is_quorum(Q) & node.member(N, Q) & node.heard_set_accept(N, Q, V)) -> node.confirmed(N, V))
 
     invariant [heard_quorum_accept_implies_confirmed]
-        forall N1, V. (node.intact(N1) &
-                       (exists Q. node.is_quorum(Q) & node.member(N1, Q) &
-                        forall N2. (node.member(N2, Q) -> node.heard_accept(N1,N2, V))))
-                    -> node.confirmed(N1, V)
+        forall N1, V. (node.intact(N1) & (heard_my_quorum_accept(N1, V))) -> node.confirmed(N1, V)
 }
 
 invariant [confirm_same_after_sufficient_messages]
