@@ -3,7 +3,7 @@
 object node = {
 
     relation member(X:id_t, S:set_t)
-    
+
     relation well_behaved(N:id_t)
     relation intact(N:id_t)
     
