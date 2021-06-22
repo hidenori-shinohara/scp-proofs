@@ -3,28 +3,35 @@
 object node = {
 
     relation member(X:id_t, S:set_t)
-
     relation well_behaved(N:id_t)
     relation intact(N:id_t)
-    
-    # intact nodes are well-behaved
-    axiom intact(N) -> well_behaved(N)
-
     relation is_quorum(S:set_t)
+    relation is_v_blocking(V:id_t, S:set_t)
 
     relation quorum_containing_intact_nodes(Q:set_t)
-    definition quorum_containing_intact_nodes(Q) = exists V . intact(V) & is_quorum(Q) & member(V, Q)
+    definition quorum_containing_intact_nodes(Q) = exists V. intact(V) & is_quorum(Q) & member(V, Q)
 
     relation intersect_at_intact_node(Q1:set_t, Q2:set_t)
     definition intersect_at_intact_node(Q1, Q2) = exists N. intact(N) & member(N, Q1) & member(N, Q2)
 
+    # We define 4 out of the 5 axioms in README.md.
+    # The 4th axiom (Cascade theorem) is defined later due to some technical reasons.
+
+    # Axiom 1.
+    # intact nodes are well-behaved.
+    axiom intact(N) -> well_behaved(N)
+
+    # Two quorums containing intact nodes intersect at an intact node.
+    # Axiom 2.
     axiom quorum_containing_intact_nodes(Q1) & quorum_containing_intact_nodes(Q2) -> intersect_at_intact_node(Q1, Q2)
 
-    relation is_v_blocking(V:id_t, S:set_t)
+    # Axiom 3.
+    # The set containing all the intact nodes is a quorum, and such a set must exist.
+    axiom exists Q. (forall N. member(N, Q) <-> intact(N)) & is_quorum(Q)
 
-    axiom (exists V. intact(V) & is_v_blocking(V, S)) -> exists V2. member(V2, S) & intact(V2)
-
-    axiom exists Q . (forall N . member(N, Q) <-> intact(N)) & is_quorum(Q)
+    # Axiom 5.
+    # If S is a v-blocking set for an intact node v, then S must contain an intact node.
+    axiom (exists V. intact(V) & is_v_blocking(V, S)) -> (exists V2. member(V2, S) & intact(V2))
 
     # These relations are state variables, and will
     # be updated during actions below.
@@ -65,13 +72,13 @@ object node = {
                 heard_set_vote_or_accept(SELF, Q, VAL)
             )
 
-    # The definition allows a v-blocking set that contains v itself
-    # to let v accept a value. However, it would never happen.
     relation accept_condition_2(SELF:id_t, VAL:val_t)
     definition accept_condition_2(SELF, VAL) =
         exists S.
             (
                 is_v_blocking(SELF, S) &
+                # The definition allows a v-blocking set that contains v itself
+                # to let v accept a value. However, it would never happen.
                 ~member(SELF, S) &
                 heard_set_accept(SELF, S, VAL)
             )
@@ -91,14 +98,6 @@ object node = {
                 member(SELF, Q) &
                 heard_set_accept(SELF, Q, VAL)
             )
-
-    after init {
-        voted(SELF, VAL) := false;
-        accepted(SELF, VAL) := false;
-        confirmed(SELF, VAL) := false;
-        heard_vote(SELF, SRC, VAL) := false;
-        heard_accept(SELF, SRC, VAL) := false;
-    }
 
     relation every_intact_node_in_this_set_accepted(SET:set_t, VAL:val_t)
     definition every_intact_node_in_this_set_accepted(SET, VAL) =
