@@ -14,11 +14,6 @@ More specifically, we will consider any set of nodes with the notion of quorums,
 1. [Cascade theorem] If `U` is a quorum of an intact node and if all intact members of `U` have accepted `val`, then either all intact nodes have accepted `val`, or there is an intact node `n` such that `n` has not accepted `val` and `n` is blocked by a set of intact nodes that have all accepted `val`.
 1. If an intact node is blocked by a set of nodes `S`, then `S` contains an intact node.
 
-More mathematically speaking, let `V` be a set of nodes such that:
-* Some subsets of `V` are defined to be quorums
-* `S` is defined to be `v`-blocking for some pairs (`v`, `S`) where `v ∈ V` and `S ⊂ V`
-* Some nodes are defined to be intact
-
 And we consider any set `V` that satisfies the 5 statements above.
 
 It is important to emphasize that we consider any configuration as long as they satisfy the statements above, and we do not consider other concepts.
