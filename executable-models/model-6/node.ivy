@@ -110,9 +110,20 @@ object node = {
     definition only_contains_intact_nodes_that_accepted(SET, VAL) =
         forall N. member(N, SET) -> intact(N) & accepted(N, VAL)
 
-    # This relation checks if _a_ set of intact nodes that have accepted blocks INTACT_NODE.
-    # Then this would imply that _the_ set of intact nodes that have accepted also blocks INTACT_NODE
-    # since a superset always blocks any node that a set blocks.
+    # Given a value VAL, this relation asks:
+    # Is there a set S such that
+    # - S only contains intact nodes, and
+    # - All nodes in S have accepted VAL, and
+    # - S blocks an intact node that has not accepted VAL?
+    #
+    # This may sound complicated (and maybe not so useful), but this is useful because
+    # this implies that there is an intact node that is ready to accept VAL.
+    # As one might suspect, this is related to liveness.
+    #
+    # One technical note: The following Ivy code says "_a_ set of intact nodes that have accepted VAL"
+    # instead of "_the_ set of intact nodes that have accepted VAL".
+    # However, it's intentional since if _a_ set of intact nodes that have accepted VAL blocks INTACT_NODE,
+    # then _the_ set of intact nodes that have accepted VAL blocks INTACT_NODE as it is a superset.
     relation set_of_intact_nodes_that_accepted_blocks_an_intact_node_that_has_not_accepted(VAL:val_t)
     definition set_of_intact_nodes_that_accepted_blocks_an_intact_node_that_has_not_accepted(VAL) =
                                     (exists INTACT_NODE, S. intact(INTACT_NODE) &
@@ -123,9 +134,11 @@ object node = {
     action assume_cascade_theorem = {
         # The cascade theorem is a higher-order property that we cannot express in first-order logic.
         # Instead, we instantiate it only when needed using assume statements in the transition system.
-        # If Q is a quorum of an intact node and every intact member of Q have accepted val, then one of the following is true:
+        # If Q is a quorum of an intact node and every intact member of Q has accepted val, then one of the following is true:
         # * All intact nodes have accepted val, _or_
         # * The set of intact nodes that have accepted val blocks at least one intact node that has not accepted it.
+        #
+        # The second case implies that the one intact node is going to accept it after sufficient messages have been delivered.
         assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
             -> (accepted_by_every_intact_node(VAL) | set_of_intact_nodes_that_accepted_blocks_an_intact_node_that_has_not_accepted(VAL));
     }
