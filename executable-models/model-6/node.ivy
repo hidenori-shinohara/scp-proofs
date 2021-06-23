@@ -14,25 +14,6 @@ object node = {
     relation intersect_at_intact_node(Q1:set_t, Q2:set_t)
     definition intersect_at_intact_node(Q1, Q2) = exists N. intact(N) & member(N, Q1) & member(N, Q2)
 
-    # We define 4 out of the 5 axioms in README.md.
-    # The 4th axiom (Cascade theorem) is defined later due to some technical reasons.
-
-    # Axiom 1.
-    # intact nodes are well-behaved.
-    axiom intact(N) -> well_behaved(N)
-
-    # Two quorums containing intact nodes intersect at an intact node.
-    # Axiom 2.
-    axiom quorum_containing_intact_nodes(Q1) & quorum_containing_intact_nodes(Q2) -> intersect_at_intact_node(Q1, Q2)
-
-    # Axiom 3.
-    # The set containing all the intact nodes is a quorum, and such a set must exist.
-    axiom exists Q. (forall N. member(N, Q) <-> intact(N)) & is_quorum(Q)
-
-    # Axiom 5.
-    # If S is a v-blocking set for an intact node v, then S must contain an intact node.
-    axiom (exists V. intact(V) & is_v_blocking(V, S)) -> (exists V2. member(V2, S) & intact(V2))
-
     # These relations are state variables, and will
     # be updated during actions below.
     relation voted(SELF:id_t, VAL:val_t)
@@ -131,17 +112,41 @@ object node = {
                                                             is_v_blocking(INTACT_NODE, S) &
                                                             only_contains_intact_nodes_that_accepted(S, VAL))
 
+    # The following are the 5 axioms from README.md:
+
+    # Axiom 1.
+    # intact nodes are well-behaved.
+    axiom intact(N) -> well_behaved(N)
+
+    # Axiom 2.
+    # Two quorums containing intact nodes intersect at an intact node.
+    axiom quorum_containing_intact_nodes(Q1) & quorum_containing_intact_nodes(Q2) -> intersect_at_intact_node(Q1, Q2)
+
+    # Axiom 3.
+    # The set containing all the intact nodes is a quorum, and such a set must exist.
+    axiom exists Q. (forall N. member(N, Q) <-> intact(N)) & is_quorum(Q)
+
+    # Axiom 4.
+    # The cascade theorem.
+    # If Q is a quorum of an intact node and every intact member of Q has accepted val, then one of the following is true:
+    # * All intact nodes have accepted val, _or_
+    # * The set of intact nodes that have accepted val blocks at least one intact node that has not accepted it.
+    #
+    # The second case implies that the one intact node is going to accept it after sufficient messages have been delivered.
+    #
+    # You might be wondering why this is an action instead of an axiom.
+    # * The cascade theorem uses mutable relations such as accepted.
+    #   In Ivy, axioms can't contain mutable relations.
+    # * The cascade theorem is a higher-order property that we cannot express in first-order logic.
+    #   Instead, we instantiate it only when needed using assume statements in the transition system.
     action assume_cascade_theorem = {
-        # The cascade theorem is a higher-order property that we cannot express in first-order logic.
-        # Instead, we instantiate it only when needed using assume statements in the transition system.
-        # If Q is a quorum of an intact node and every intact member of Q has accepted val, then one of the following is true:
-        # * All intact nodes have accepted val, _or_
-        # * The set of intact nodes that have accepted val blocks at least one intact node that has not accepted it.
-        #
-        # The second case implies that the one intact node is going to accept it after sufficient messages have been delivered.
         assume forall Q, VAL. quorum_containing_intact_nodes(Q) & every_intact_node_in_this_set_accepted(Q, VAL)
             -> (accepted_by_every_intact_node(VAL) | set_of_intact_nodes_that_accepted_blocks_an_intact_node_that_has_not_accepted(VAL));
     }
+
+    # Axiom 5.
+    # If S is a v-blocking set for an intact node v, then S must contain an intact node.
+    axiom (exists V. intact(V) & is_v_blocking(V, S)) -> (exists V2. member(V2, S) & intact(V2))
 
     action vote(self_id:id_t, v:val_t) =
     {
