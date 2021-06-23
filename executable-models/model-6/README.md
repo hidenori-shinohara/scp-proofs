@@ -23,30 +23,38 @@ Of course, this abstraction makes sense only if all the statements above are ind
 
 # Proofs
 
+Let `B` be the set of befouled nodes.
+Due to quorum intersection, B is a DSet by Theorem 3.
+
 ## Intact nodes are well-behaved.
 
 This is true by the definition of intactness.
 
 ## The intersection of two quorums of intact nodes contains an intact node.
 
-Due to quorum intersection, the set of befouled nodes, B, is a DSet by Theorem 3.
-Thus, the given FBAS enjoys quorum intersection despite B.
+By the definition of a DSet, the given FBAS enjoys quorum intersection despite B.
 In other words, the intersection of two quorums of intact nodes contains an intact node.
 
 ## The set of intact nodes is a quorum.
 
-Since `B` is a DSet, the given FBAS enjoys quorum availability despite `B`.
-In other words, `V = B` or `V \ B` is a quorum in `<V, Q>`.
-In each case, `V \ B` is a quorum.
+Since `B` is a DSet, the given FBAS enjoys quorum availability despite `B` by the definition of a DSet.
+Quorum availability despite `B` means `V = B` or `V \ B` is a quorum in `<V, Q>`.
+In the first case, all nodes are befouled.
+In the second case, the set of all intact nodes is a quorum.
 
 ## Cascade theorem
 
-This is similar to Theorem 10, and the proof for Theorem 10 directly proves this since the proof only uses the fact that `(U \ B) ⊂ S` (TODO: Make sure that my understanding is correct)
+This is almost identical to Theorem 10.
+The only difference is that Theorem 10 assumes`U ⊂ S` and we assume `(U \ B) ⊂ S` here.
+However, the proof for Theorem 10 only uses the fact that `(U \ B) ⊂ S`, anyway.
+(TODO: Make sure that my understanding is correct)
 
 ## If an intact node is blocked by a set of nodes `S`, then `S` contains an intact node.
 
 Let `v` be an intact node.
-`V \ B` is a quorum of `v` since the given FBAS enjoys quorum availability despite `B`.
+`V \ B` is a quorum since the given FBAS enjoys quorum availability despite `B`.
+Clearly, `V \ B` contains `v`.
 Thus `v` has a quorum slice that consists only of intact nodes.
-Therefore, any `v`-blocking set must contain befouled nodes.
+Therefore, any set consisting only of befouled nodes can't block `v`.
+Hence, any `v`-blocking set must contain befouled nodes.
 
