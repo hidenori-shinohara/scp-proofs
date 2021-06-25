@@ -1,0 +1,19 @@
+#lang ivy1.7
+
+include sort
+include node
+include network
+include assertion
+
+interpret id_t -> bv[2]
+interpret set_t -> bv[2]
+interpret val_t -> bv[2]
+
+# Allow Ivy to cause any number of the following actions.
+export node.vote
+export network.deliver_vote
+export network.deliver_accept
+export assertion.check_invariants
+
+
+extract fuzz_runner = node, network, id_t, assertion

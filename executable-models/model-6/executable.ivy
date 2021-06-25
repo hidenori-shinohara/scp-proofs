@@ -1,0 +1,30 @@
+#lang ivy1.7
+
+include sort
+include node
+include network
+include assertion
+
+interpret id_t -> bv[2]
+interpret set_t -> bv[4]
+interpret val_t -> bv[2]
+
+
+# Allow Ivy to cause any number of the following actions.
+export node.vote
+export network.deliver_vote
+export network.deliver_accept
+export assertion.check_invariants
+export assertion.assert_voted
+export assertion.assert_accepted
+export assertion.assert_confirmed
+export assertion.assert_not_voted
+export assertion.assert_not_accepted
+export assertion.assert_not_confirmed
+export assertion.assert_quorum
+export assertion.assert_not_quorum
+
+# Extract a runnable node parameterized by a self-id
+extract executable_runner = node, network, id_t, assertion
+
+
